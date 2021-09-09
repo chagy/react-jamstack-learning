@@ -67,9 +67,20 @@ export default function Header({ categories }) {
     { node: { name: "Contact Us", strapiId: "contactus", link: "/contact" } },
   ]
 
+  const activeIndex = () => {
+    const found = routes.indexOf(
+      routes.filter(
+        ({ node: { name, link } }) =>
+          (link || `/${name.toLowerCase()}`) === window.location.pathname
+      )[0]
+    )
+
+    return found === -1 ? false : found
+  }
+
   const tabs = (
     <Tabs
-      value={0}
+      value={activeIndex()}
       classes={{
         indicator: classes.colorIndecator,
         root: classes.tabs,
@@ -97,8 +108,15 @@ export default function Header({ categories }) {
       classes={{ paper: classes.drawer }}
     >
       <List disablePadding>
-        {routes.map(route => (
-          <ListItem divider button key={route.node.strapiId}>
+        {routes.map((route, i) => (
+          <ListItem
+            selected={activeIndex() === i}
+            component={Link}
+            to={route.node.link || `/${route.node.name.toLowerCase()}`}
+            divider
+            button
+            key={route.node.strapiId}
+          >
             <ListItemText
               classes={{ primary: classes.listItemText }}
               primary={route.node.name}
@@ -124,7 +142,11 @@ export default function Header({ categories }) {
   return (
     <AppBar color="transparent" elevation={0}>
       <Toolbar>
-        <Button classes={{ root: classes.logoContainer }}>
+        <Button
+          classes={{ root: classes.logoContainer }}
+          component={Link}
+          to="/"
+        >
           <Typography variant="h1">
             <span className={classes.logoText}>VAR</span> X
           </Typography>
@@ -133,12 +155,16 @@ export default function Header({ categories }) {
         {actions.map(action => {
           if (action.visible) {
             return (
-              <IconButton component={Link} to={action.link} key={action.alt}>
+              <IconButton
+                onClick={action.onClick}
+                component={action.onClick ? undefined : Link}
+                to={action.onClick ? undefined : action.link}
+                key={action.alt}
+              >
                 <img
                   className={classes.icon}
                   src={action.icon}
                   alt={action.alt}
-                  onClick={action.onClick}
                 />
               </IconButton>
             )
