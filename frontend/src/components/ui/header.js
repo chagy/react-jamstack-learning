@@ -29,6 +29,11 @@ const useStyles = makeStyles(theme => ({
   logoText: {
     color: theme.palette.common.black,
   },
+  logo: {
+    [theme.breakpoints.down("xs")]: {
+      fontSize: "3rem",
+    },
+  },
   logoContainer: {
     [theme.breakpoints.down("md")]: {
       marginRight: "auto",
@@ -45,6 +50,10 @@ const useStyles = makeStyles(theme => ({
   icon: {
     height: "3rem",
     width: "3rem",
+    [theme.breakpoints.down("xs")]: {
+      height: "2rem",
+      width: "2rem",
+    },
   },
   drawer: {
     backgroundColor: theme.palette.primary.main,
@@ -141,13 +150,13 @@ export default function Header({ categories }) {
 
   return (
     <AppBar color="transparent" elevation={0} position="static">
-      <Toolbar>
+      <Toolbar disableGutters>
         <Button
           classes={{ root: classes.logoContainer }}
           component={Link}
           to="/"
         >
-          <Typography variant="h1">
+          <Typography variant="h1" classes={{ root: classes.logo }}>
             <span className={classes.logoText}>VAR</span> X
           </Typography>
         </Button>

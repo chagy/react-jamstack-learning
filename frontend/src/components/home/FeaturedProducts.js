@@ -7,6 +7,7 @@ import {
   makeStyles,
   Button,
   Chip,
+  useMediaQuery,
 } from "@material-ui/core"
 import { useStaticQuery, graphql } from "gatsby"
 
@@ -25,10 +26,17 @@ const useStyles = makeStyles(theme => ({
     width: "100%",
     height: "180rem",
     padding: "0 2.5rem",
+    [theme.breakpoints.down("md")]: {
+      height: "220rem",
+    },
   },
   featured: {
     height: "20rem",
     width: "20rem",
+    [theme.breakpoints.down("md")]: {
+      height: "15rem",
+      width: "15rem",
+    },
   },
   frame: {
     backgroundImage: `url(${frame})`,
@@ -42,6 +50,10 @@ const useStyles = makeStyles(theme => ({
     boxShadow: theme.shadows[5],
     position: "absolute",
     zIndex: 1,
+    [theme.breakpoints.down("md")]: {
+      height: "19.8rem",
+      width: "20rem",
+    },
   },
   slide: {
     backgroundColor: theme.palette.primary.main,
@@ -50,12 +62,19 @@ const useStyles = makeStyles(theme => ({
     zIndex: 0,
     transition: "transform 0.5s ease",
     padding: "1rem 2rem",
+    [theme.breakpoints.down("md")]: {
+      height: "15.2rem",
+      width: "19.5rem",
+    },
   },
   slideLeft: {
     transform: "translate(-24.5rem,0px)",
   },
   slideRight: {
     transform: "translate(24.5rem,0px)",
+  },
+  slideDown: {
+    transform: "translate(0px,17rem)",
   },
   productContainer: {
     margin: "5rem 0",
@@ -82,6 +101,8 @@ export default function FeaturedProducts() {
   const classes = useStyles()
   const [expanded, setExpanded] = useState(null)
 
+  const matchesMD = useMediaQuery(theme => theme.breakpoints.down("md"))
+
   const data = useStaticQuery(graphql`
     query GetFeatured {
       allStrapiProduct(filter: { featured: { eq: true } }) {
@@ -105,16 +126,17 @@ export default function FeaturedProducts() {
     <Grid
       container
       direction="column"
-      justify="center"
+      justify={matchesMD ? "space-between" : "center"}
       classes={{ root: classes.background }}
     >
       {data.allStrapiProduct.edges.map(({ node }, i) => {
-        const alignment =
-          i === 0 || i === 3
-            ? "flex-start"
-            : i === 1 || i === 4
-            ? "center"
-            : "flex-end"
+        const alignment = matchesMD
+          ? "center"
+          : i === 0 || i === 3
+          ? "flex-start"
+          : i === 1 || i === 4
+          ? "center"
+          : "flex-end"
         return (
           <Grid
             item
@@ -144,10 +166,12 @@ export default function FeaturedProducts() {
               classes={{
                 root: clsx(classes.slide, {
                   [classes.slideLeft]:
-                    expanded === i && alignment === "flex-end",
+                    !matchesMD && expanded === i && alignment === "flex-end",
                   [classes.slideRight]:
+                    !matchesMD &&
                     expanded === i &&
                     (alignment === "flex-start" || alignment === "center"),
+                  [classes.slideDown]: matchesMD && expanded === i,
                 }),
               }}
             >
