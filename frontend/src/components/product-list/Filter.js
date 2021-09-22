@@ -55,13 +55,7 @@ export default function Filter({ setOption, filterOptions }) {
               <Grid item key={option}>
                 <Grid container direction="column">
                   <Grid item>
-                    <Chip
-                      label={option}
-                      classes={{
-                        root: classes.chipRoot,
-                        label: classes.chipLabel,
-                      }}
-                    />
+                    <Chip label={option} />
                   </Grid>
                   <Grid item>
                     <FormControl>

@@ -36,6 +36,7 @@ export const query = graphql`
           variants {
             color
             id
+            price
             size
             style
             images {
