@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState } from "react"
 import { Grid, Typography, makeStyles } from "@material-ui/core"
 
 import FunctionContainer from "./FunctionContainer"
@@ -10,16 +10,25 @@ const useStyles = makeStyles(theme => ({
     borderRadius: 25,
     width: "95%",
     height: "auto",
+    marginBottom: "5rem",
   },
 }))
 
 export default function DynamicToolbar({ filterOptions, name, description }) {
   const classes = useStyles()
 
+  const [option, setOption] = useState(null)
+
   return (
     <Grid item container direction="column" classes={{ root: classes.toolbar }}>
-      <FunctionContainer filterOptions={filterOptions} />
-      <DescriptionContainer name={name} description={description} />
+      <FunctionContainer
+        option={option}
+        setOption={setOption}
+        filterOptions={filterOptions}
+      />
+      {option === null && (
+        <DescriptionContainer name={name} description={description} />
+      )}
     </Grid>
   )
 }
