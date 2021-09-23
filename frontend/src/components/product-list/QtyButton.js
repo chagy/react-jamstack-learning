@@ -6,8 +6,9 @@ import {
   makeStyles,
   Button,
   ButtonGroup,
+  Badge,
 } from "@material-ui/core"
-import cart from "../../images/cart.svg"
+import Cart from "../../images/Cart"
 const useStyles = makeStyles(theme => ({
   qtyText: {
     color: "#fff",
@@ -38,6 +39,17 @@ const useStyles = makeStyles(theme => ({
   minusButton: {
     borderTop: "2px solid #fff",
   },
+  qtyButton: {
+    "&:hover": {
+      backgroundColor: theme.palette.secondary.main,
+    },
+  },
+  badge: {
+    color: "#fff",
+    fontSize: "1.5rem",
+    backgroundColor: theme.palette.secondary.main,
+    padding: 0,
+  },
 }))
 
 export default function QtyButton() {
@@ -47,18 +59,22 @@ export default function QtyButton() {
   return (
     <Grid item>
       <ButtonGroup classes={{ root: classes.mainGroup }}>
-        <Button classes={{ root: classes.endButtons }}>
+        <Button classes={{ root: clsx(classes.endButtons, classes.qtyButton) }}>
           <Typography variant="h3" classes={{ root: classes.qtyText }}>
             {qty}
           </Typography>
         </Button>
         <ButtonGroup orientation="vertical">
-          <Button classes={{ root: classes.editButtons }}>
+          <Button
+            onClick={() => setQty(qty + 1)}
+            classes={{ root: classes.editButtons }}
+          >
             <Typography variant="h3" classes={{ root: classes.qtyText }}>
               +
             </Typography>
           </Button>
           <Button
+            onClick={() => setQty(qty - 1)}
             classes={{ root: clsx(classes.editButtons, classes.minusButton) }}
           >
             <Typography
@@ -72,7 +88,13 @@ export default function QtyButton() {
         <Button
           classes={{ root: clsx(classes.endButtons, classes.cartButton) }}
         >
-          <img src={cart} alt="add to cart" />
+          <Badge
+            overlap="circle"
+            badgeContent="+"
+            classes={{ badge: classes.badge }}
+          >
+            <Cart color="#fff" />
+          </Badge>
         </Button>
       </ButtonGroup>
     </Grid>
