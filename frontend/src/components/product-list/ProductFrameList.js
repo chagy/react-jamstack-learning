@@ -1,10 +1,13 @@
 import React from "react"
+import { Link } from "gatsby"
 import { Grid, Typography, makeStyles, Chip } from "@material-ui/core"
-
 import Rating from "../home/Rating"
 import Sizes from "./Sizes"
 import Swatches from "./Swatches"
 import QtyButton from "./QtyButton"
+
+import { colorIndex } from "./ProductFrameGrid"
+
 import frame from "../../images/product-frame-list.svg"
 
 const useStyles = makeStyles(theme => ({
@@ -31,6 +34,12 @@ const useStyles = makeStyles(theme => ({
   sizesAndSwatches: {
     maxWidth: "13rem",
   },
+  chipLabel: {
+    fontSize: "2rem",
+    "&:hover": {
+      cursor: "pointer",
+    },
+  },
 }))
 
 export default function ProductFrameList({
@@ -44,6 +53,12 @@ export default function ProductFrameList({
   setSelectedColor,
 }) {
   const classes = useStyles()
+  const imageIndex = colorIndex(product, variant, selectedColor)
+
+  const images =
+    imageIndex !== -1
+      ? product.node.variants[imageIndex].images
+      : variant.images
 
   return (
     <Grid item container>
@@ -55,8 +70,15 @@ export default function ProductFrameList({
         alignItems="center"
         justify="space-around"
       >
-        {variant.images.map(image => (
-          <Grid item>
+        {images.map(image => (
+          <Grid
+            item
+            key={image.url}
+            component={Link}
+            to={`/${product.node.category.name.toLowerCase()}/${product.node.name
+              .split(" ")[0]
+              .toLowerCase()}`}
+          >
             <img
               src={process.env.GATSBY_STRAPI_URL + image.url}
               alt={image.url}
@@ -73,7 +95,15 @@ export default function ProductFrameList({
         justify="space-between"
         classes={{ root: classes.info }}
       >
-        <Grid item container direction="column">
+        <Grid
+          item
+          container
+          direction="column"
+          component={Link}
+          to={`/${product.node.category.name.toLowerCase()}/${product.node.name
+            .split(" ")[0]
+            .toLowerCase()}`}
+        >
           <Grid item>
             <Typography variant="h4">
               {product.node.name.split(" ")[0]}
@@ -83,7 +113,10 @@ export default function ProductFrameList({
             <Rating number={3.5} />
           </Grid>
           <Grid item>
-            <Chip label={`$${variant.price}`} />
+            <Chip
+              label={`$${variant.price}`}
+              classes={{ label: classes.chipLabel }}
+            />
           </Grid>
           <Grid item>
             <Typography variant="h3" classes={{ root: classes.stock }}>

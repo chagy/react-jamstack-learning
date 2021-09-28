@@ -61,8 +61,13 @@ export default function DescriptionContainer({
   description,
   layout,
   setLayout,
+  setPage,
 }) {
   const classes = useStyles()
+  const changeLayout = option => {
+    setPage(1)
+    setLayout(option)
+  }
 
   return (
     <Grid
@@ -86,7 +91,7 @@ export default function DescriptionContainer({
       <Grid item classes={{ root: classes.buttonGroup }}>
         <ButtonGroup>
           <Button
-            onClick={() => setLayout("list")}
+            onClick={() => changeLayout("list")}
             classes={{
               outlined: clsx(classes.button, {
                 [classes.selected]: layout === "list",
@@ -96,7 +101,7 @@ export default function DescriptionContainer({
             <ListIcon color={layout === "list" ? "#fff" : undefined} />
           </Button>
           <Button
-            onClick={() => setLayout("grid")}
+            onClick={() => changeLayout("grid")}
             classes={{
               outlined: clsx(classes.button, {
                 [classes.selected]: layout === "grid",
