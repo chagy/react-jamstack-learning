@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import clsx from "clsx"
-import { Grid, Typography, makeStyles } from "@material-ui/core"
+import { Grid, Typography, makeStyles, useMediaQuery } from "@material-ui/core"
+import { navigate } from "gatsby"
 import QuickView from "./QuickView"
 import frame from "../../images/product-frame-grid.svg"
 
@@ -15,10 +16,18 @@ const useStyles = makeStyles(theme => ({
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
+    [theme.breakpoints.down("xs")]: {
+      height: "20rem",
+      width: "20rem",
+    },
   },
   product: {
     height: "20rem",
     width: "20rem",
+    [theme.breakpoints.down("xs")]: {
+      height: "15rem",
+      width: "15rem",
+    },
   },
   title: {
     backgroundColor: theme.palette.primary.main,
@@ -28,6 +37,9 @@ const useStyles = makeStyles(theme => ({
     justifyContent: "center",
     alignItems: "center",
     marginTop: "-0.1rem",
+    [theme.breakpoints.down("xs")]: {
+      width: "20rem",
+    },
   },
   invisibility: {
     visibility: "hidden",
@@ -59,6 +71,11 @@ export default function ProductFrameGrid({
 }) {
   const classes = useStyles()
   const [open, setOpen] = useState(false)
+  const matchesMD = useMediaQuery(theme => theme.breakpoints.down("md"))
+
+  if (matchesMD && open) {
+    setOpen(false)
+  }
 
   const imageIndex = colorIndex(product, variant, selectedColor)
   const imgURL =
@@ -76,7 +93,19 @@ export default function ProductFrameGrid({
         }),
       }}
     >
-      <Grid container direction="column" onClick={() => setOpen(true)}>
+      <Grid
+        container
+        direction="column"
+        onClick={() =>
+          matchesMD
+            ? navigate(
+                `/${product.node.category.name.toLowerCase()}/${product.node.name
+                  .split(" ")[0]
+                  .toLowerCase()}`
+              )
+            : setOpen(true)
+        }
+      >
         <Grid item classes={{ root: classes.frame }}>
           <img
             src={imgURL}

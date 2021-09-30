@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { Grid, Typography, makeStyles } from "@material-ui/core"
+import { Grid, makeStyles } from "@material-ui/core"
 
 import FunctionContainer from "./FunctionContainer"
 import DescriptionContainer from "./DescriptionContainer"
@@ -16,11 +16,13 @@ const useStyles = makeStyles(theme => ({
 
 export default function DynamicToolbar({
   filterOptions,
+  setFilterOptions,
   name,
   description,
   layout,
   setLayout,
-  setPage,
+  sortOptions,
+  setSortOptions,
 }) {
   const classes = useStyles()
 
@@ -32,6 +34,9 @@ export default function DynamicToolbar({
         option={option}
         setOption={setOption}
         filterOptions={filterOptions}
+        setFilterOptions={setFilterOptions}
+        sortOptions={sortOptions}
+        setSortOptions={setSortOptions}
       />
       {option === null && (
         <DescriptionContainer
@@ -39,7 +44,6 @@ export default function DynamicToolbar({
           setLayout={setLayout}
           name={name}
           description={description}
-          setPage={setPage}
         />
       )}
     </Grid>

@@ -1,7 +1,6 @@
 import React from "react"
 import {
   Grid,
-  Typography,
   makeStyles,
   IconButton,
   Chip,
@@ -29,10 +28,24 @@ const useStyles = makeStyles(theme => ({
   checkbox: {
     color: "#fff",
   },
+  optionsContainer: {
+    [theme.breakpoints.down("xs")]: {
+      "& > :not(:last-child)": {
+        marginBottom: "2rem",
+      },
+    },
+  },
 }))
 
-export default function Filter({ setOption, filterOptions }) {
+export default function Filter({ setOption, filterOptions, setFilterOptions }) {
   const classes = useStyles()
+
+  const handleFilter = (option, i) => {
+    const newFilters = { ...filterOptions }
+    newFilters[option][i].checked = !newFilters[option][i].checked
+
+    setFilterOptions(newFilters)
+  }
 
   return (
     <Grid
@@ -48,7 +61,11 @@ export default function Filter({ setOption, filterOptions }) {
         </IconButton>
       </Grid>
       <Grid item xs>
-        <Grid container justify="space-around">
+        <Grid
+          container
+          justify="space-around"
+          classes={{ root: classes.optionsContainer }}
+        >
           {Object.keys(filterOptions)
             .filter(option => filterOptions[option] !== null)
             .map(option => (
@@ -60,7 +77,7 @@ export default function Filter({ setOption, filterOptions }) {
                   <Grid item>
                     <FormControl>
                       <FormGroup>
-                        {filterOptions[option].map(({ label, checked }) => (
+                        {filterOptions[option].map(({ label, checked }, i) => (
                           <FormControlLabel
                             classes={{ label: classes.checkbox }}
                             key={label}
@@ -70,6 +87,7 @@ export default function Filter({ setOption, filterOptions }) {
                                 classes={{ root: classes.checkbox }}
                                 checked={checked}
                                 name={label}
+                                onChange={() => handleFilter(option, i)}
                               />
                             }
                           />
