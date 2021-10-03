@@ -20,6 +20,10 @@ const useStyles = makeStyles(theme => ({
       height: "20rem",
       width: "20rem",
     },
+    [theme.breakpoints.up("xs")]: {
+      height: ({ small }) => (small ? "15rem" : undefined),
+      width: ({ small }) => (small ? "15rem" : undefined),
+    },
   },
   product: {
     height: "20rem",
@@ -27,6 +31,10 @@ const useStyles = makeStyles(theme => ({
     [theme.breakpoints.down("xs")]: {
       height: "15rem",
       width: "15rem",
+    },
+    [theme.breakpoints.up("xs")]: {
+      height: ({ small }) => (small ? "12rem" : undefined),
+      width: ({ small }) => (small ? "12rem" : undefined),
     },
   },
   title: {
@@ -39,6 +47,9 @@ const useStyles = makeStyles(theme => ({
     marginTop: "-0.1rem",
     [theme.breakpoints.down("xs")]: {
       width: "20rem",
+    },
+    [theme.breakpoints.up("xs")]: {
+      width: ({ small }) => (small ? "15rem" : undefined),
     },
   },
   invisibility: {
@@ -54,7 +65,10 @@ const useStyles = makeStyles(theme => ({
 export const colorIndex = (product, variant, color) => {
   return product.node.variants.indexOf(
     product.node.variants.filter(
-      item => item.color === color && variant.style === item.style
+      item =>
+        item.color === color &&
+        variant.style === item.style &&
+        item.size === variant.size
     )[0]
   )
 }
@@ -68,8 +82,12 @@ export default function ProductFrameGrid({
   selectedSize,
   setSelectedColor,
   setSelectedSize,
+  hasStyles,
+  disableQuickView,
+  small,
+  stock,
 }) {
-  const classes = useStyles()
+  const classes = useStyles({ small })
   const [open, setOpen] = useState(false)
   const matchesMD = useMediaQuery(theme => theme.breakpoints.down("md"))
 
@@ -97,11 +115,11 @@ export default function ProductFrameGrid({
         container
         direction="column"
         onClick={() =>
-          matchesMD
+          matchesMD || disableQuickView
             ? navigate(
                 `/${product.node.category.name.toLowerCase()}/${product.node.name
                   .split(" ")[0]
-                  .toLowerCase()}`
+                  .toLowerCase()}${hasStyles ? `?style=${variant.style}` : ""} `
               )
             : setOpen(true)
         }
@@ -124,12 +142,16 @@ export default function ProductFrameGrid({
         name={productName}
         price={variant.price}
         product={product}
+        variant={variant}
         sizes={sizes}
         colors={colors}
         selectedColor={selectedColor}
         selectedSize={selectedSize}
         setSelectedColor={setSelectedColor}
         setSelectedSize={setSelectedSize}
+        hasStyles={hasStyles}
+        stock={stock}
+        imageIndex={imageIndex}
       />
     </Grid>
   )

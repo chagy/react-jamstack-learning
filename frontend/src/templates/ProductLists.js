@@ -11,6 +11,7 @@ import {
   price,
   alphabetic,
 } from "../components/product-list/SortFunctions"
+
 const useStyles = makeStyles(theme => ({
   fab: {
     alignSelf: "flex-end",
@@ -68,10 +69,6 @@ export default function ProductList({
       behavior: "smooth",
     })
   }
-
-  useEffect(() => {
-    setPage(1)
-  }, [filterOptions, layout])
 
   const productsPerPage = layout === "grid" ? 16 : 6
 

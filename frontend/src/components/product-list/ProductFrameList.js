@@ -5,6 +5,7 @@ import Rating from "../home/Rating"
 import Sizes from "./Sizes"
 import Swatches from "./Swatches"
 import QtyButton from "./QtyButton"
+import { getStockDisplay } from "../product-detail/ProductInfo"
 
 import { colorIndex } from "./ProductFrameGrid"
 
@@ -57,6 +58,8 @@ export default function ProductFrameList({
   selectedColor,
   setSelectedSize,
   setSelectedColor,
+  hasStyles,
+  stock,
 }) {
   const classes = useStyles()
   const imageIndex = colorIndex(product, variant, selectedColor)
@@ -65,6 +68,11 @@ export default function ProductFrameList({
     imageIndex !== -1
       ? product.node.variants[imageIndex].images
       : variant.images
+
+  const selectedVariant =
+    imageIndex === -1 ? product.node.variants.indexOf(variant) : imageIndex
+
+  const stockDisplay = getStockDisplay(stock, selectedVariant)
 
   return (
     <Grid item container>
@@ -83,7 +91,7 @@ export default function ProductFrameList({
             component={Link}
             to={`/${product.node.category.name.toLowerCase()}/${product.node.name
               .split(" ")[0]
-              .toLowerCase()}`}
+              .toLowerCase()}${hasStyles ? `?style=${variant.style}` : ""} `}
           >
             <img
               src={process.env.GATSBY_STRAPI_URL + image.url}
@@ -108,7 +116,7 @@ export default function ProductFrameList({
           component={Link}
           to={`/${product.node.category.name.toLowerCase()}/${product.node.name
             .split(" ")[0]
-            .toLowerCase()}`}
+            .toLowerCase()}${hasStyles ? `?style=${variant.style}` : ""} `}
         >
           <Grid item>
             <Typography variant="h4">
@@ -126,7 +134,7 @@ export default function ProductFrameList({
           </Grid>
           <Grid item>
             <Typography variant="h3" classes={{ root: classes.stock }}>
-              12 Currently In Stock
+              {stockDisplay}
             </Typography>
           </Grid>
         </Grid>
@@ -147,7 +155,7 @@ export default function ProductFrameList({
             setSelectedColor={setSelectedColor}
           />
         </Grid>
-        <QtyButton />
+        <QtyButton stock={stock} selectedVariant={selectedVariant} />
       </Grid>
     </Grid>
   )
