@@ -1,22 +1,21 @@
 import React, { useState } from "react"
 import clsx from "clsx"
+import axios from "axios"
 import {
   Grid,
   Typography,
   makeStyles,
   Button,
   IconButton,
-  TextField,
-  InputAdornment,
 } from "@material-ui/core"
 
-import validate from "../ui/validate"
+import Fields from "./Fields"
 
 import accountIcon from "../../images/account.svg"
 import EmailAdornment from "../../images/EmailAdornment"
 import passwordAdornment from "../../images/password-adornment.svg"
-import hidePassword from "../../images/hide-password.svg"
-import showPassword from "../../images/show-password.svg"
+import hidePasswordIcon from "../../images/hide-password.svg"
+import showPasswordIcon from "../../images/show-password.svg"
 import addUserIcon from "../../images/add-user.svg"
 import forgotPasswordIcon from "../../images/forgot.svg"
 import close from "../../images/close.svg"
@@ -30,12 +29,7 @@ const useStyles = makeStyles(theme => ({
   accountIcon: {
     marginTop: "2rem",
   },
-  textField: {
-    width: "20rem",
-  },
-  input: {
-    color: theme.palette.secondary.main,
-  },
+
   login: {
     width: "20rem",
     borderRadius: 50,
@@ -43,7 +37,7 @@ const useStyles = makeStyles(theme => ({
   },
   facebookText: {
     fontSize: "1.5rem",
-    fontWeight: 700,
+    fontWeight: 600,
     textTransform: "none",
   },
   facebookButton: {
@@ -63,6 +57,45 @@ const useStyles = makeStyles(theme => ({
   },
 }))
 
+export const EmailPassword = (
+  classes,
+  hideEmail,
+  hidePassword,
+  visible,
+  setVisible
+) => ({
+  email: {
+    helperText: "invalid email",
+    type: "text",
+    placeholder: "Email",
+    hidden: hideEmail,
+    startAdornment: (
+      <span className={classes.emailAdornment}>
+        <EmailAdornment />
+      </span>
+    ),
+  },
+  password: {
+    helperText:
+      "you password must be at least eight characters and include one uppercase letter, one number, and on special character",
+    placeholder: "Password",
+    hidden: hidePassword,
+    type: visible ? "text" : "password",
+    startAdornment: <img src={passwordAdornment} alt="password" />,
+    endAdornment: (
+      <IconButton
+        classes={{ root: classes.visibleIcon }}
+        onClick={() => setVisible(!visible)}
+      >
+        <img
+          src={visible ? showPasswordIcon : hidePasswordIcon}
+          alt={`${visible ? "Show" : "Hide"} Password`}
+        />
+      </IconButton>
+    ),
+  },
+})
+
 export default function Login({ steps, setSelectedStep }) {
   const classes = useStyles()
 
@@ -74,32 +107,7 @@ export default function Login({ steps, setSelectedStep }) {
   const [visible, setVisible] = useState(false)
   const [forgot, setForgot] = useState(false)
 
-  const fields = {
-    email: {
-      helperText: "invalid email",
-      type: "text",
-      placeholder: "Email",
-      startAdornment: (
-        <span className={classes.emailAdornment}>
-          <EmailAdornment />
-        </span>
-      ),
-    },
-    password: {
-      helperText:
-        "you password must be at least eight characters and include one uppercase letter, one number, and on special character",
-      placeholder: "Password",
-      hidden: forgot,
-      type: visible ? "text" : "password",
-      startAdornment: <img src={passwordAdornment} alt="password" />,
-      endAdornment: (
-        <img
-          src={visible ? showPassword : hidePassword}
-          alt={`${visible ? "Show" : "Hide"} Password`}
-        />
-      ),
-    },
-  }
+  const fields = EmailPassword(classes, false, forgot, visible, setVisible)
 
   const navigateSignUp = () => {
     const signUp = steps.find(step => step.label === "Sign Up")
@@ -107,60 +115,43 @@ export default function Login({ steps, setSelectedStep }) {
     setSelectedStep(steps.indexOf(signUp))
   }
 
+  const handleLogin = () => {
+    axios
+      .post(process.env.GATSBY_STRAPI_URL + "/auth/local", {
+        identifier: values.email,
+        password: values.password,
+      })
+      .then(response => {
+        console.log("User Profile", response.data.user)
+        console.log("JWT", response.data.jwt)
+      })
+      .catch(error => {
+        console.error(error)
+      })
+  }
+
+  const disabled =
+    Object.keys(errors).some(error => errors[error] === true) ||
+    Object.keys(errors).length !== Object.keys(values).length
+  console.log(disabled)
   return (
     <>
       <Grid item classes={{ root: classes.accountIcon }}>
         <img src={accountIcon} alt="login page" />
       </Grid>
-      {Object.keys(fields).map(field => {
-        const validateHelper = event => {
-          const valid = validate({ [field]: event.target.value })
-          setErrors({ ...errors, [field]: !valid[field] })
-        }
-
-        return !fields[field].hidden ? (
-          <Grid item key={field}>
-            <TextField
-              value={values[field]}
-              onChange={e => {
-                if (errors[field]) {
-                  validateHelper(e)
-                }
-                setValues({ ...values, [field]: e.target.value })
-              }}
-              onBlur={e => validateHelper(e)}
-              error={errors[field]}
-              helperText={errors[field] && fields[field].helperText}
-              classes={{ root: classes.textField }}
-              placeholder={fields[field].placeholder}
-              type={fields[field].type}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    {fields[field].startAdornment}
-                  </InputAdornment>
-                ),
-                endAdornment: fields[field].endAdornment ? (
-                  <InputAdornment position="end">
-                    <IconButton
-                      classes={{ root: classes.visibleIcon }}
-                      onClick={() => setVisible(!visible)}
-                    >
-                      {fields[field].endAdornment}
-                    </IconButton>
-                  </InputAdornment>
-                ) : undefined,
-                classes: { input: classes.input },
-              }}
-            />
-          </Grid>
-        ) : null
-      })}
-
+      <Fields
+        fields={fields}
+        errors={errors}
+        setErrors={setErrors}
+        values={values}
+        setValues={setValues}
+      />
       <Grid item>
         <Button
           variant="contained"
           color="secondary"
+          disabled={!forgot && disabled}
+          onClick={() => (forgot ? null : handleLogin())}
           classes={{
             root: clsx(classes.login, {
               [classes.reset]: forgot,

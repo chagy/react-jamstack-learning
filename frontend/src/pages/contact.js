@@ -265,10 +265,9 @@ const ContactPage = () => {
               <Grid container direction="column">
                 {Object.keys(fields).map(field => {
                   const validateHelper = event => {
-                    const valid = validate({
+                    return validate({
                       [field]: event.target.value,
                     })
-                    setErrors({ ...errors, [field]: !valid[field] })
                   }
                   return (
                     <Grid
@@ -285,12 +284,16 @@ const ContactPage = () => {
                         placeholder={fields[field].placeholder}
                         value={values[field]}
                         onChange={e => {
-                          if (errors[field]) {
-                            validateHelper(e)
+                          const valid = validateHelper(e)
+                          if (errors[field] || valid[field] === true) {
+                            setErrors({ ...errors, [field]: !valid[field] })
                           }
                           setValues({ ...values, [field]: e.target.value })
                         }}
-                        onBlur={e => validateHelper(e)}
+                        onBlur={e => {
+                          const valid = validateHelper(e)
+                          setErrors({ ...errors, [field]: !valid[field] })
+                        }}
                         error={errors[field]}
                         helperText={errors[field] && fields[field].helperText}
                         classes={{ root: classes.textField }}
