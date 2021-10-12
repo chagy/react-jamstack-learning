@@ -10,6 +10,7 @@ import {
 } from "@material-ui/core"
 
 import Fields from "./Fields"
+import { setUser } from "../../contexts/actions"
 
 import accountIcon from "../../images/account.svg"
 import EmailAdornment from "../../images/EmailAdornment"
@@ -96,7 +97,7 @@ export const EmailPassword = (
   },
 })
 
-export default function Login({ steps, setSelectedStep }) {
+export default function Login({ steps, setSelectedStep, user, dispatchUser }) {
   const classes = useStyles()
 
   const [values, setValues] = useState({
@@ -122,8 +123,10 @@ export default function Login({ steps, setSelectedStep }) {
         password: values.password,
       })
       .then(response => {
-        console.log("User Profile", response.data.user)
-        console.log("JWT", response.data.jwt)
+        // console.log("User Profile", response.data.user)
+        // console.log("JWT", response.data.jwt)
+
+        dispatchUser(setUser({ ...response.data.user, jwt: response.data.jwt }))
       })
       .catch(error => {
         console.error(error)
@@ -133,7 +136,7 @@ export default function Login({ steps, setSelectedStep }) {
   const disabled =
     Object.keys(errors).some(error => errors[error] === true) ||
     Object.keys(errors).length !== Object.keys(values).length
-  console.log(disabled)
+
   return (
     <>
       <Grid item classes={{ root: classes.accountIcon }}>
@@ -150,7 +153,7 @@ export default function Login({ steps, setSelectedStep }) {
         <Button
           variant="contained"
           color="secondary"
-          disabled={!forgot && disabled}
+          disabled={forgot && disabled}
           onClick={() => (forgot ? null : handleLogin())}
           classes={{
             root: clsx(classes.login, {

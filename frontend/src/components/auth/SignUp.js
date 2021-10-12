@@ -13,6 +13,7 @@ import axios from "axios"
 
 import Fields from "./Fields"
 import { EmailPassword } from "./Login"
+import { setUser } from "../../contexts/actions"
 
 import addUserIcon from "../../images/add-user.svg"
 import nameAdornment from "../../images/name-adornment.svg"
@@ -56,7 +57,7 @@ const useStyles = makeStyles(theme => ({
   },
 }))
 
-export default function SignUp({ steps, setSelectedStep }) {
+export default function SignUp({ steps, setSelectedStep, user, dispatchUser }) {
   const classes = useStyles()
   const [values, setValues] = useState({
     email: "",
@@ -89,8 +90,10 @@ export default function SignUp({ steps, setSelectedStep }) {
         password: values.password,
       })
       .then(response => {
-        console.log("User Profile", response.data.user)
-        console.log("JWT", response.data.jwt)
+        // console.log("User Profile", response.data.user)
+        // console.log("JWT", response.data.jwt)
+
+        dispatchUser(setUser({ ...response.data.user, jwt: response.data.jwt }))
 
         const complete = steps.find(step => step.label === "Complete")
 
