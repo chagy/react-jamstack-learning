@@ -36,6 +36,9 @@ const useStyles = makeStyles(theme => ({
     width: "20rem",
     borderRadius: 50,
     textTransform: "none",
+    [theme.breakpoints.down("xs")]: {
+      width: "15rem",
+    },
   },
   facebookText: {
     fontSize: "1.5rem",
@@ -56,6 +59,11 @@ const useStyles = makeStyles(theme => ({
   },
   reset: {
     marginTop: "-4rem",
+  },
+  buttonText: {
+    [theme.breakpoints.down("xs")]: {
+      fontSize: "1.5rem",
+    },
   },
 }))
 
@@ -211,8 +219,8 @@ export default function Login({
           {loading ? (
             <CircularProgress />
           ) : (
-            <Typography variant="h5">
-              {forgot ? "reset password" : "login"}
+            <Typography variant="h5" classes={{ root: classes.buttonText }}>
+              {forgot ? "forgot password" : "login"}
             </Typography>
           )}
         </Button>
@@ -220,6 +228,8 @@ export default function Login({
       {forgot ? null : (
         <Grid item>
           <Button
+            component="a"
+            href={`${process.env.GATSBY_STRAPI_URL}/connect/facebook`}
             classes={{
               root: clsx(classes.facebookButton, {
                 [classes.passwordError]: errors.password,

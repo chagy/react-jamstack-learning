@@ -26,20 +26,20 @@ const useStyles = makeStyles(theme => ({
     height: "10rem",
     width: "11rem",
   },
-  textField: {
-    width: "20rem",
-  },
-  input: {
-    color: theme.palette.secondary.main,
-  },
   facebookSignUp: {
     width: "20rem",
     borderRadius: 50,
     marginTop: "-3rem",
+    [theme.breakpoints.down("xs")]: {
+      width: "15rem",
+    },
   },
   facebookText: {
     textTransform: "none",
     fontSize: "1.5rem",
+    [theme.breakpoints.down("xs")]: {
+      fontSize: "1.25rem",
+    },
   },
   navigation: {
     width: "4rem",
@@ -148,6 +148,12 @@ export default function SignUp({
         <Button
           variant="contained"
           color="secondary"
+          component={!info ? "a" : undefined}
+          href={
+            !info
+              ? `${process.env.GATSBY_STRAPI_URL}/connect/facebook`
+              : undefined
+          }
           disabled={loading || (info && disabled)}
           onClick={() => (info ? handleComplete() : null)}
           classes={{
@@ -171,7 +177,7 @@ export default function SignUp({
             <img
               src={backward}
               alt="back to login"
-              classNam={classes.navigation}
+              className={classes.navigation}
             />
           </IconButton>
         </Grid>
@@ -181,7 +187,7 @@ export default function SignUp({
               <img
                 src={forward}
                 alt="continue registration"
-                classNam={classes.navigation}
+                className={classes.navigation}
               />
             </IconButton>
           </Grid>
