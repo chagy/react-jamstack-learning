@@ -1,10 +1,10 @@
-import React, { useState, useContext } from "react"
+import React, { useState, useContext, useEffect } from "react"
 import { Grid, Typography, makeStyles, Paper } from "@material-ui/core"
 
 import Login from "./Login"
 import SignUp from "./SignUp"
 import Complete from "./Complete"
-import { UserContext } from "../../contexts"
+import { UserContext, FeedbackContext } from "../../contexts"
 
 const useStyles = makeStyles(theme => ({
   paper: {
@@ -36,12 +36,24 @@ export default function AuthPortal() {
   const classes = useStyles()
   const [selectedStep, setSelectedStep] = useState(0)
   const { user, dispatchUser } = useContext(UserContext)
+  const { feedback, dispatchFeedback } = useContext(FeedbackContext)
 
   const steps = [
     { component: Login, label: "Login" },
     { component: SignUp, label: "Sign Up" },
     { component: Complete, label: "Complete" },
+    { component: Reset, label: "Reset" },
   ]
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get("code")
+
+    if (code) {
+      const resetStep = steps.find(step => step.label === "Reset")
+      setSelectedStep(steps.indexOf(resetStep))
+    }
+  }, [])
 
   return (
     <Grid
@@ -65,6 +77,8 @@ export default function AuthPortal() {
                   steps={steps}
                   user={user}
                   dispatchUser={dispatchUser}
+                  feedback={feedback}
+                  dispatchFeedback={dispatchFeedback}
                   key={Step.label}
                 />
               ) : null

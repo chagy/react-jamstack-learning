@@ -8,12 +8,13 @@ import {
   InputAdornment,
   Button,
   IconButton,
+  CircularProgress,
 } from "@material-ui/core"
 import axios from "axios"
 
 import Fields from "./Fields"
 import { EmailPassword } from "./Login"
-import { setUser } from "../../contexts/actions"
+import { setUser, setSnackbar } from "../../contexts/actions"
 
 import addUserIcon from "../../images/add-user.svg"
 import nameAdornment from "../../images/name-adornment.svg"
@@ -57,7 +58,13 @@ const useStyles = makeStyles(theme => ({
   },
 }))
 
-export default function SignUp({ steps, setSelectedStep, user, dispatchUser }) {
+export default function SignUp({
+  steps,
+  setSelectedStep,
+  user,
+  dispatchUser,
+  dispatchFeedback,
+}) {
   const classes = useStyles()
   const [values, setValues] = useState({
     email: "",
@@ -68,6 +75,7 @@ export default function SignUp({ steps, setSelectedStep, user, dispatchUser }) {
   const [errors, setErrors] = useState({})
   const [visible, setVisible] = useState(false)
   const [info, setInfo] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const handleNavigate = direction => {
     if (direction === "forward") {
@@ -83,6 +91,7 @@ export default function SignUp({ steps, setSelectedStep, user, dispatchUser }) {
   }
 
   const handleComplete = () => {
+    setLoading(true)
     axios
       .post(process.env.GATSBY_STRAPI_URL + "/auth/local/register", {
         username: values.name,
@@ -92,7 +101,7 @@ export default function SignUp({ steps, setSelectedStep, user, dispatchUser }) {
       .then(response => {
         // console.log("User Profile", response.data.user)
         // console.log("JWT", response.data.jwt)
-
+        setLoading(false)
         dispatchUser(setUser({ ...response.data.user, jwt: response.data.jwt }))
 
         const complete = steps.find(step => step.label === "Complete")
@@ -100,6 +109,9 @@ export default function SignUp({ steps, setSelectedStep, user, dispatchUser }) {
         setSelectedStep(steps.indexOf(complete))
       })
       .catch(error => {
+        const { message } = error.response.data.message[0].messages[0]
+        dispatchFeedback(setSnackbar({ status: "error", message: message }))
+        setLoading(false)
         console.error(error)
       })
   }
@@ -136,7 +148,7 @@ export default function SignUp({ steps, setSelectedStep, user, dispatchUser }) {
         <Button
           variant="contained"
           color="secondary"
-          disabled={info && disabled}
+          disabled={loading || (info && disabled)}
           onClick={() => (info ? handleComplete() : null)}
           classes={{
             root: clsx(classes.facebookSignUp, {
@@ -144,9 +156,13 @@ export default function SignUp({ steps, setSelectedStep, user, dispatchUser }) {
             }),
           }}
         >
-          <Typography variant="h5" classes={{ root: classes.facebookText }}>
-            Sign up {info ? "" : " with Facebook"}
-          </Typography>
+          {loading ? (
+            <CircularProgress />
+          ) : (
+            <Typography variant="h5" classes={{ root: classes.facebookText }}>
+              Sign up {info ? "" : " with Facebook"}
+            </Typography>
+          )}
         </Button>
       </Grid>
       <Grid item container justifyContent="space-between">

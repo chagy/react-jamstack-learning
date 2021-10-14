@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import clsx from "clsx"
 import axios from "axios"
 import {
@@ -7,10 +7,11 @@ import {
   makeStyles,
   Button,
   IconButton,
+  CircularProgress,
 } from "@material-ui/core"
 
 import Fields from "./Fields"
-import { setUser } from "../../contexts/actions"
+import { setUser, setSnackbar } from "../../contexts/actions"
 
 import accountIcon from "../../images/account.svg"
 import EmailAdornment from "../../images/EmailAdornment"
@@ -97,7 +98,13 @@ export const EmailPassword = (
   },
 })
 
-export default function Login({ steps, setSelectedStep, user, dispatchUser }) {
+export default function Login({
+  steps,
+  setSelectedStep,
+  user,
+  dispatchUser,
+  dispatchFeedback,
+}) {
   const classes = useStyles()
 
   const [values, setValues] = useState({
@@ -107,6 +114,8 @@ export default function Login({ steps, setSelectedStep, user, dispatchUser }) {
   const [errors, setErrors] = useState({})
   const [visible, setVisible] = useState(false)
   const [forgot, setForgot] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
 
   const fields = EmailPassword(classes, false, forgot, visible, setVisible)
 
@@ -117,6 +126,7 @@ export default function Login({ steps, setSelectedStep, user, dispatchUser }) {
   }
 
   const handleLogin = () => {
+    setLoading(true)
     axios
       .post(process.env.GATSBY_STRAPI_URL + "/auth/local", {
         identifier: values.email,
@@ -125,17 +135,54 @@ export default function Login({ steps, setSelectedStep, user, dispatchUser }) {
       .then(response => {
         // console.log("User Profile", response.data.user)
         // console.log("JWT", response.data.jwt)
-
-        dispatchUser(setUser({ ...response.data.user, jwt: response.data.jwt }))
+        setLoading(false)
+        setSuccess(true)
+        dispatchUser(
+          setUser({
+            ...response.data.user,
+            jwt: response.data.jwt,
+            onboarding: true,
+          })
+        )
       })
       .catch(error => {
+        const { message } = error.response.data.message[0].messages[0]
+        setLoading(false)
         console.error(error)
+        dispatchFeedback(setSnackbar({ status: "error", message: message }))
       })
+  }
+
+  const handleForgot = () => {
+    setLoading(true)
+
+    axios
+      .post(process.env.GATSBY_STRAPI_URL + "/auth/forgot-password", {
+        email: values.email,
+      })
+      .then(response => {
+        setLoading(false)
+
+        dispatchFeedback(
+          setSnackbar({ status: "success", message: "Reset Code Sent" })
+        )
+      })
+      .catch(error => {})
   }
 
   const disabled =
     Object.keys(errors).some(error => errors[error] === true) ||
     Object.keys(errors).length !== Object.keys(values).length
+
+  useEffect(() => {
+    if (!success) return
+
+    const timer = setTimeout(() => {
+      setForgot(false)
+    }, 6000)
+
+    return () => clearTimeout(timer)
+  }, [success])
 
   return (
     <>
@@ -153,17 +200,21 @@ export default function Login({ steps, setSelectedStep, user, dispatchUser }) {
         <Button
           variant="contained"
           color="secondary"
-          disabled={forgot && disabled}
-          onClick={() => (forgot ? null : handleLogin())}
+          disabled={loading || (!forgot && disabled)}
+          onClick={() => (forgot ? handleForgot() : handleLogin())}
           classes={{
             root: clsx(classes.login, {
               [classes.reset]: forgot,
             }),
           }}
         >
-          <Typography variant="h5">
-            {forgot ? "reset password" : "login"}
-          </Typography>
+          {loading ? (
+            <CircularProgress />
+          ) : (
+            <Typography variant="h5">
+              {forgot ? "reset password" : "login"}
+            </Typography>
+          )}
         </Button>
       </Grid>
       {forgot ? null : (
