@@ -1,0 +1,43 @@
+import React from "react"
+import { Grid, Typography, makeStyles, Button } from "@material-ui/core"
+
+const useStyles = makeStyles(theme => ({
+  slot: {
+    backgroundColor: "#FFF",
+    borderRadius: 25,
+    width: "2.5rem",
+    height: "2.5rem",
+    minWidth: 0,
+    border: `0.15rem solid ${theme.palette.secondary.main}`,
+    "&:hover": {
+      backgroundColor: "#fff",
+    },
+  },
+  slotText: {
+    color: theme.palette.secondary.main,
+    marginLeft: "-0.25rem",
+  },
+  slotWrapper: {
+    marginLeft: "1rem",
+    marginBottom: "1rem",
+    "& > :not(:first-child)": {
+      marginLeft: "-0.5rem",
+    },
+  },
+}))
+
+export default function Slots() {
+  const classes = useStyles()
+
+  return (
+    <Grid item classes={{ root: classes.slotWrapper }}>
+      {[1, 2, 3].map(slot => (
+        <Button key={slot} classes={{ root: classes.slot }}>
+          <Typography variant="h5" classes={{ root: classes.slotText }}>
+            {slot}
+          </Typography>
+        </Button>
+      ))}
+    </Grid>
+  )
+}

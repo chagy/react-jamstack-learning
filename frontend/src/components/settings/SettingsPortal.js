@@ -1,7 +1,10 @@
-import React, { useContext, useState } from "react"
+import React, { useContext, useState, useEffect } from "react"
 import { Grid, Typography, makeStyles, Button } from "@material-ui/core"
-import { useSprings, animated } from "react-spring"
+import clsx from "clsx"
+import { useSpring, useSprings, animated } from "react-spring"
 import useResizeAware from "react-resize-aware"
+
+import Settings from "./Settings"
 
 import { UserContext } from "../../contexts/wrappers/UserWrapper"
 
@@ -10,7 +13,7 @@ import settingsIcon from "../../images/settings.svg"
 import orderHistoryIcon from "../../images/order-history.svg"
 import favoritesIcon from "../../images/favorite.svg"
 import subscriptionIcon from "../../images/subscription.svg"
-import background from "../../images/toolbar-background.svg"
+import background from "../../images/repeating-smallest.svg"
 
 const useStyles = makeStyles(theme => ({
   name: {
@@ -18,13 +21,16 @@ const useStyles = makeStyles(theme => ({
   },
   dashboard: {
     width: "100%",
-    height: "30rem",
+    minHeight: "30rem",
+    height: "auto",
     backgroundImage: `url(${background})`,
-    backgroundSize: "cover",
+    backgroundSize: "fill",
     backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-    borderTop: `0.5rem solid ${theme.palette.primary.main}`,
-    borderBottom: `0.5rem solid ${theme.palette.primary.main}`,
+    backgroundRepeat: "repeat",
+    borderTop: ({ showComponent }) =>
+      `${showComponent ? 0 : 0.5}rem solid ${theme.palette.primary.main}`,
+    borderBottom: ({ showComponent }) =>
+      `${showComponent ? 0 : 0.5}rem solid ${theme.palette.primary.main}`,
     margin: "5rem 0",
   },
   icon: {
@@ -32,22 +38,28 @@ const useStyles = makeStyles(theme => ({
     width: "12rem",
   },
   button: {
-    height: "22rem",
-    width: "22rem",
-    borderRadius: 25,
+    backgroundColor: theme.palette.primary.main,
+  },
+  addHover: {
+    "&:hover": {
+      cursor: "pointer",
+      backgroundColor: theme.palette.secondary.main,
+    },
   },
 }))
 
 const AnimatedButton = animated(Button)
+const AnimatedGrid = animated(Grid)
 
 export default function SettingsPortal() {
-  const classes = useStyles()
   const { user } = useContext(UserContext)
   const [selectedSetting, setSelectedSetting] = useState(null)
   const [resizeListener, sizes] = useResizeAware()
+  const [showComponent, setShowComponent] = useState(false)
+  const classes = useStyles({ showComponent })
 
   const buttons = [
-    { label: "Settings", icon: settingsIcon },
+    { label: "Settings", icon: settingsIcon, component: Settings },
     { label: "Order History", icon: orderHistoryIcon },
     { label: "Favorites", icon: favoritesIcon },
     { label: "Subscriptions", icon: subscriptionIcon },
@@ -70,6 +82,7 @@ export default function SettingsPortal() {
             selectedSetting === button.label || selectedSetting === null
               ? "scale(1)"
               : "scale(0)",
+          delay: selectedSetting !== null ? 0 : 600,
         }
 
         const size = {
@@ -77,13 +90,39 @@ export default function SettingsPortal() {
           width:
             selectedSetting === button.label ? `${sizes.width}px` : "352px",
           borderRadius: selectedSetting === button.label ? 0 : 25,
+          delay: selectedSetting !== null ? 600 : 0,
+        }
+
+        const hide = {
+          display:
+            selectedSetting === button.label || selectedSetting === null
+              ? "flex"
+              : "none",
+          delay: 150,
         }
 
         await next(selectedSetting !== null ? scale : size)
+        await next(hide)
         await next(selectedSetting !== null ? size : scale)
       },
     }))
   )
+
+  const styles = useSpring({
+    opacity: selectedSetting === null || showComponent ? 1 : 0,
+    delay: selectedSetting === null || showComponent ? 0 : 1350,
+  })
+
+  useEffect(() => {
+    if (selectedSetting === null) {
+      setShowComponent(false)
+      return
+    }
+
+    const timer = setTimeout(() => setShowComponent(true), 2000)
+
+    return () => clearTimeout(timer)
+  }, [selectedSetting])
 
   return (
     <Grid container direction="column" alignItems="center">
@@ -103,29 +142,47 @@ export default function SettingsPortal() {
         alignItems="center"
         justifyContent="space-around"
       >
-        {springs.map((prop, i) => (
-          <Grid item>
-            <AnimatedButton
-              variant="contained"
-              color="primary"
-              onClick={() => handleClick(buttons[i].label)}
+        {springs.map((prop, i) => {
+          const button = buttons[i]
+          return (
+            <AnimatedGrid
+              item
+              key={i}
+              onClick={() => (showComponent ? null : handleClick(button.label))}
               style={prop}
+              classes={{
+                root: clsx(classes.button, {
+                  [classes.addHover]: !showComponent,
+                }),
+              }}
             >
-              <Grid container direction="column">
-                <Grid item>
-                  <img
-                    src={buttons[i].icon}
-                    alt={buttons[i].label}
-                    className={classes.icon}
-                  />
-                </Grid>
-                <Grid item>
-                  <Typography variant="h5">{buttons[i].label}</Typography>
-                </Grid>
-              </Grid>
-            </AnimatedButton>
-          </Grid>
-        ))}
+              <AnimatedGrid
+                style={styles}
+                container
+                direction="column"
+                alignItems="center"
+                justifyContent="center"
+              >
+                {selectedSetting === button.label && showComponent ? (
+                  <button.component setSelectedSetting={setSelectedSetting} />
+                ) : (
+                  <>
+                    <Grid item>
+                      <img
+                        src={button.icon}
+                        alt={button.label}
+                        className={classes.icon}
+                      />
+                    </Grid>
+                    <Grid item>
+                      <Typography variant="h5">{button.label}</Typography>
+                    </Grid>
+                  </>
+                )}
+              </AnimatedGrid>
+            </AnimatedGrid>
+          )
+        })}
       </Grid>
     </Grid>
   )
