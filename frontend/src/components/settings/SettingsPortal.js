@@ -1,12 +1,18 @@
 import React, { useContext, useState, useEffect } from "react"
-import { Grid, Typography, makeStyles, Button } from "@material-ui/core"
+import {
+  Grid,
+  Typography,
+  makeStyles,
+  Button,
+  useMediaQuery,
+} from "@material-ui/core"
 import clsx from "clsx"
 import { useSpring, useSprings, animated } from "react-spring"
 import useResizeAware from "react-resize-aware"
 
 import Settings from "./Settings"
-
 import { UserContext } from "../../contexts/wrappers/UserWrapper"
+import { setUser } from "../../contexts/actions"
 
 import accountIcon from "../../images/account.svg"
 import settingsIcon from "../../images/settings.svg"
@@ -32,10 +38,26 @@ const useStyles = makeStyles(theme => ({
     borderBottom: ({ showComponent }) =>
       `${showComponent ? 0 : 0.5}rem solid ${theme.palette.primary.main}`,
     margin: "5rem 0",
+    [theme.breakpoints.down("md")]: {
+      padding: "5rem 0",
+      "& > :not(:last-child)": {
+        marginBottom: ({ showComponent }) => (showComponent ? 0 : "5rem"),
+      },
+    },
+    [theme.breakpoints.down("xs")]: {
+      padding: "2rem 0",
+      "& > :not(:last-child)": {
+        marginBottom: ({ showComponent }) => (showComponent ? 0 : "5rem"),
+      },
+    },
   },
   icon: {
     height: "12rem",
     width: "12rem",
+    [theme.breakpoints.down("lg")]: {
+      height: "10rem",
+      width: "10rem",
+    },
   },
   button: {
     backgroundColor: theme.palette.primary.main,
@@ -46,17 +68,33 @@ const useStyles = makeStyles(theme => ({
       backgroundColor: theme.palette.secondary.main,
     },
   },
+  logout: {
+    color: theme.palette.error.main,
+  },
 }))
 
 const AnimatedButton = animated(Button)
 const AnimatedGrid = animated(Grid)
 
 export default function SettingsPortal() {
-  const { user } = useContext(UserContext)
+  const { user, dispatchUser, defaultUser } = useContext(UserContext)
   const [selectedSetting, setSelectedSetting] = useState(null)
   const [resizeListener, sizes] = useResizeAware()
   const [showComponent, setShowComponent] = useState(false)
   const classes = useStyles({ showComponent })
+
+  const matchesLG = useMediaQuery(theme => theme.breakpoints.down("lg"))
+  const matchesMD = useMediaQuery(theme => theme.breakpoints.down("md"))
+  const matchesXS = useMediaQuery(theme => theme.breakpoints.down("xs"))
+
+  const buttonWidth = matchesXS
+    ? `${sizes.width - 64}px`
+    : matchesMD
+    ? `${sizes.width - 160}px`
+    : matchesLG
+    ? "288px"
+    : "352px"
+  const buttonHeight = matchesMD ? "22rem" : matchesLG ? "18rem" : "22rem"
 
   const buttons = [
     { label: "Settings", icon: settingsIcon, component: Settings },
@@ -86,9 +124,9 @@ export default function SettingsPortal() {
         }
 
         const size = {
-          height: selectedSetting === button.label ? "60rem" : "22rem",
+          height: selectedSetting === button.label ? "60rem" : buttonHeight,
           width:
-            selectedSetting === button.label ? `${sizes.width}px` : "352px",
+            selectedSetting === button.label ? `${sizes.width}px` : buttonWidth,
           borderRadius: selectedSetting === button.label ? 0 : 25,
           delay: selectedSetting !== null ? 600 : 0,
         }
@@ -113,6 +151,10 @@ export default function SettingsPortal() {
     delay: selectedSetting === null || showComponent ? 0 : 1350,
   })
 
+  const handleLogout = () => {
+    dispatchUser(setUser(defaultUser))
+  }
+
   useEffect(() => {
     if (selectedSetting === null) {
       setShowComponent(false)
@@ -135,12 +177,20 @@ export default function SettingsPortal() {
           Welcome back, {user.username}
         </Typography>
       </Grid>
+      <Grid item>
+        <Button onClick={handleLogout}>
+          <Typography variant="h5" classes={{ root: classes.logout }}>
+            logout
+          </Typography>
+        </Button>
+      </Grid>
       <Grid
         item
         container
         classes={{ root: classes.dashboard }}
         alignItems="center"
         justifyContent="space-around"
+        direction={matchesMD ? "column" : "row"}
       >
         {springs.map((prop, i) => {
           const button = buttons[i]

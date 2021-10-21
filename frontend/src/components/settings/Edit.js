@@ -1,5 +1,16 @@
-import React from "react"
-import { Grid, Typography, makeStyles, IconButton } from "@material-ui/core"
+import React, { useContext, useState } from "react"
+import axios from "axios"
+import {
+  Grid,
+  Typography,
+  makeStyles,
+  IconButton,
+  CircularProgress,
+} from "@material-ui/core"
+
+import { FeedbackContext } from "../../contexts"
+import { setSnackbar, setUser } from "../../contexts/actions"
+import Confirmation from "./Confirmation"
 
 import BackwardsIcon from "../../images/BackwardsOutline"
 import editIcon from "../../images/edit.svg"
@@ -15,8 +26,78 @@ const useStyles = makeStyles(theme => ({
   },
 }))
 
-export default function Edit({ setSelectedSetting }) {
+export default function Edit({
+  user,
+  dispatchUser,
+  setSelectedSetting,
+  edit,
+  setEdit,
+  details,
+  locations,
+  detailSlot,
+  locationSlot,
+  changesMade,
+  isError,
+}) {
   const classes = useStyles()
+  const { dispatchFeedback } = useContext(FeedbackContext)
+  const [loading, setLoading] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false)
+
+  const handleEdit = () => {
+    if (edit && isError) {
+      dispatchFeedback(
+        setSnackbar({
+          status: "error",
+          message: "All fields must be valid before saving",
+        })
+      )
+      return
+    }
+
+    setEdit(!edit)
+    const { password, ...newDetails } = details
+
+    if (password !== "********") {
+      setDialogOpen(true)
+    }
+
+    if (edit && changesMade) {
+      setLoading(true)
+
+      axios
+        .post(
+          process.env.GATSBY_STRAPI_URL + "/users-permissions/set-settings",
+          {
+            details: newDetails,
+            detailSlot,
+            location: locations,
+            locationSlot,
+          },
+          { headers: { Authorization: `Bearer ${user.jwt}` } }
+        )
+        .then(response => {
+          setLoading(false)
+          dispatchFeedback(
+            setSnackbar({ status: "success", message: "successfully" })
+          )
+          dispatchUser(
+            setUser({ ...response.data, jwt: user.jwt, onboarding: true })
+          )
+        })
+        .catch(error => {
+          setLoading(false)
+          console.error(error)
+          dispatchFeedback(
+            setSnackbar({
+              status: "error",
+              message:
+                "There was a problem saving your settings, please try again.",
+            })
+          )
+        })
+    }
+  }
 
   return (
     <Grid
@@ -35,10 +116,25 @@ export default function Edit({ setSelectedSetting }) {
         </IconButton>
       </Grid>
       <Grid item>
-        <IconButton>
-          <img src={editIcon} alt="edit settings" className={classes.icon} />
-        </IconButton>
+        {loading ? (
+          <CircularProgress color="secondary" size="8rem" />
+        ) : (
+          <IconButton disabled={loading} onClick={handleEdit}>
+            <img
+              src={edit ? saveIcon : editIcon}
+              alt={`${edit ? "save" : "edit"} settings`}
+              className={classes.icon}
+            />
+          </IconButton>
+        )}
       </Grid>
+      <Confirmation
+        dialogOpen={dialogOpen}
+        setDialogOpen={setDialogOpen}
+        user={user}
+        dispatchFeedback={dispatchFeedback}
+        setSnackbar={setSnackbar}
+      />
     </Grid>
   )
 }

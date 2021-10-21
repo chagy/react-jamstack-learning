@@ -1,9 +1,9 @@
-import React from "react"
+import React, { useState } from "react"
 import { Grid, Typography, makeStyles, Button } from "@material-ui/core"
 
 import Slots from "./Slots"
 
-import card from "../../images/card.svg"
+import cardIcon from "../../images/card.svg"
 
 const useStyles = makeStyles(theme => ({
   number: {
@@ -38,10 +38,11 @@ const useStyles = makeStyles(theme => ({
   },
 }))
 
-export default function Payments() {
+export default function Payments({ user }) {
   const classes = useStyles()
+  const [slot, setSlot] = useState(0)
 
-  const cards = [{ last4: 1234, brand: "Visa" }]
+  const card = user.paymentMethods[slot]
 
   return (
     <Grid
@@ -54,19 +55,17 @@ export default function Payments() {
       classes={{ root: classes.paymentContainer }}
     >
       <Grid item>
-        <img src={card} alt="payment settings" className={classes.icon} />
+        <img src={cardIcon} alt="payment settings" className={classes.icon} />
       </Grid>
       <Grid item container justifyContent="center">
         <Grid item>
           <Typography variant="h3" classes={{ root: classes.number }}>
-            {cards
-              ? `${cards[0].brand.toUpperCase()} **** **** **** ${
-                  cards[0].last4
-                }`
+            {card.last4
+              ? `${card[0].brand.toUpperCase()} **** **** **** ${card[0].last4}`
               : "Add A New Card During Checkout"}
           </Typography>
         </Grid>
-        {cards && (
+        {card.last4 && (
           <Grid item>
             <Button variant="contained" classes={{ root: classes.removeCard }}>
               <Typography
@@ -80,7 +79,7 @@ export default function Payments() {
         )}
       </Grid>
       <Grid item container classes={{ root: classes.slotContainer }}>
-        <Slots />
+        <Slots slot={slot} setSlot={setSlot} />
       </Grid>
     </Grid>
   )

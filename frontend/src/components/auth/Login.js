@@ -23,11 +23,6 @@ import forgotPasswordIcon from "../../images/forgot.svg"
 import close from "../../images/close.svg"
 
 const useStyles = makeStyles(theme => ({
-  emailAdornment: {
-    height: 17,
-    width: 22,
-    marginBottom: 10,
-  },
   accountIcon: {
     marginTop: "2rem",
   },
@@ -48,9 +43,6 @@ const useStyles = makeStyles(theme => ({
   facebookButton: {
     marginTop: "-1rem",
   },
-  visibleIcon: {
-    padding: 0,
-  },
   passwordError: {
     marginTop: 0,
   },
@@ -68,7 +60,6 @@ const useStyles = makeStyles(theme => ({
 }))
 
 export const EmailPassword = (
-  classes,
   hideEmail,
   hidePassword,
   visible,
@@ -81,7 +72,7 @@ export const EmailPassword = (
     placeholder: "Email",
     hidden: hideEmail,
     startAdornment: (
-      <span className={classes.emailAdornment}>
+      <span style={{ height: 17, width: 22, marginBottom: 10 }}>
         <EmailAdornment color={isWhite ? "#fff" : null} />
       </span>
     ),
@@ -94,10 +85,7 @@ export const EmailPassword = (
     type: visible ? "text" : "password",
     startAdornment: <PasswordAdornment color={isWhite ? "#fff" : null} />,
     endAdornment: (
-      <IconButton
-        classes={{ root: classes.visibleIcon }}
-        onClick={() => setVisible(!visible)}
-      >
+      <IconButton style={{ padding: 0 }} onClick={() => setVisible(!visible)}>
         {visible ? (
           <ShowPasswordIcon color={isWhite ? "#fff" : null} />
         ) : (
@@ -127,7 +115,7 @@ export default function Login({
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
-  const fields = EmailPassword(classes, false, forgot, visible, setVisible)
+  const fields = EmailPassword(false, forgot, visible, setVisible)
 
   const navigateSignUp = () => {
     const signUp = steps.find(step => step.label === "Sign Up")

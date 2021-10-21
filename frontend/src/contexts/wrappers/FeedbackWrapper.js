@@ -1,5 +1,5 @@
 import React, { useReducer, createContext } from "react"
-import { Snackbar } from "@material-ui/core"
+import Snackbar from "@material-ui/core/Snackbar"
 import { setSnackbar } from "../actions"
 import feedbackReducer from "../reducers/feedback-reducer"
 
@@ -21,7 +21,7 @@ export function FeedbackWrapper({ children }) {
         message={feedback.message}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
         autoHideDuration={6000}
-        onClose={() => dispatchFeedback(setSnackbar())}
+        onClose={() => dispatchFeedback(setSnackbar({ open: false }))}
         ContentProps={{
           style: {
             backgroundColor: feedback.backgroundColor,

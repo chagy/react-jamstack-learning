@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Grid, Typography, makeStyles, Button } from "@material-ui/core"
 
 import Fields from "../auth/Fields"
@@ -49,25 +49,32 @@ const useStyles = makeStyles(theme => ({
   },
 }))
 
-export default function Details() {
+export default function Details({
+  user,
+  edit,
+  setChangesMade,
+  values,
+  setValues,
+  slot,
+  setSlot,
+  errors,
+  setErrors,
+}) {
   const classes = useStyles()
   const [visible, setVisible] = useState(false)
-  const [values, setValues] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    password: "",
-  })
-  const [errors, setErrors] = useState({})
 
-  const email_password = EmailPassword(
-    classes,
-    false,
-    false,
-    visible,
-    setVisible,
-    true
-  )
+  useEffect(() => {
+    setValues({ ...user.contactInfo[slot], password: "********" })
+  }, [slot])
+
+  useEffect(() => {
+    const changed = Object.keys(user.contactInfo[slot]).some(
+      field => values[field] !== user.contactInfo[slot][field]
+    )
+    setChangesMade(changed)
+  }, [values])
+
+  const email_password = EmailPassword(false, false, visible, setVisible, true)
   const name_phone = {
     name: {
       helperText: "you must enter a name",
@@ -118,11 +125,12 @@ export default function Details() {
             errors={errors}
             setErrors={setErrors}
             isWhite
+            disabled={!edit}
           />
         </Grid>
       ))}
       <Grid item container classes={{ root: classes.slotContainer }}>
-        <Slots />
+        <Slots slot={slot} setSlot={setSlot} />
       </Grid>
     </Grid>
   )

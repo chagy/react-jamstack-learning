@@ -5,9 +5,9 @@ import validate from "../ui/validate"
 
 const useStyles = makeStyles(theme => ({
   textField: {
-    width: "20rem",
+    width: ({ fullWidth }) => (fullWidth ? undefined : "20rem"),
     [theme.breakpoints.down("xs")]: {
-      width: "15rem",
+      width: ({ fullWidth }) => (fullWidth ? undefined : "15rem"),
     },
   },
   input: {
@@ -22,9 +22,12 @@ export default function Fields({
   values,
   setValues,
   isWhite,
+  disabled,
+  fullWidth,
 }) {
   const classes = useStyles({
     isWhite,
+    fullWidth,
   })
 
   return Object.keys(fields).map(field => {
@@ -52,6 +55,8 @@ export default function Fields({
           classes={{ root: classes.textField }}
           placeholder={fields[field].placeholder}
           type={fields[field].type}
+          disabled={disabled}
+          fullWidth={fullWidth}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
