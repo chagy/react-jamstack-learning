@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react"
-import { Grid, Typography, makeStyles, Button } from "@material-ui/core"
+import clsx from "clsx"
+import {
+  Grid,
+  makeStyles,
+  useMediaQuery,
+  FormControlLabel,
+  Switch,
+} from "@material-ui/core"
 
 import Fields from "../auth/Fields"
 import Slots from "./Slots"
@@ -23,12 +30,27 @@ const useStyles = makeStyles(theme => ({
     marginBottom: 10,
   },
   icon: {
-    marginBottom: "3rem",
+    marginBottom: ({ checkout }) => (checkout ? "1rem" : "3rem"),
+    [theme.breakpoints.down("xs")]: {
+      marginBottom: "1rem",
+    },
   },
   fieldContainer: {
     marginBottom: "3rem",
     "& > :not(:first-child)": {
       marginLeft: "5rem",
+    },
+    [theme.breakpoints.down("xs")]: {
+      marginBottom: "1rem",
+      "& > :not(:first-child)": {
+        marginLeft: 0,
+        marginTop: "1rem",
+      },
+    },
+  },
+  fieldContainerCart: {
+    "& > *": {
+      marginBottom: "1rem",
     },
   },
   slotContainer: {
@@ -37,6 +59,10 @@ const useStyles = makeStyles(theme => ({
   },
   detailsContainer: {
     position: "relative",
+    [theme.breakpoints.down("md")]: {
+      borderBottom: "4px solid #fff",
+      height: "30rem",
+    },
   },
   "@global": {
     ".MuiInput-underline:before, .MuiInput-underline:hover:not(.Mui-disabled):before":
@@ -59,15 +85,25 @@ export default function Details({
   setSlot,
   errors,
   setErrors,
+  checkout,
+  billing,
+  setBilling,
 }) {
   const classes = useStyles()
   const [visible, setVisible] = useState(false)
+  const matchesXS = useMediaQuery(theme => theme.breakpoints.down("xs"))
 
   useEffect(() => {
-    setValues({ ...user.contactInfo[slot], password: "********" })
+    if (checkout) {
+      setValues(user.contactInfo[slot])
+    } else {
+      setValues({ ...user.contactInfo[slot], password: "********" })
+    }
   }, [slot])
 
   useEffect(() => {
+    if (checkout) return
+
     const changed = Object.keys(user.contactInfo[slot]).some(
       field => values[field] !== user.contactInfo[slot][field]
     )
@@ -92,14 +128,25 @@ export default function Details({
     },
   }
 
-  const fields = [name_phone, email_password]
+  let fields = [name_phone, email_password]
+
+  if (checkout) {
+    fields = [
+      {
+        name: name_phone.name,
+        email: email_password.email,
+        phone: name_phone.phone,
+      },
+    ]
+  }
 
   return (
     <Grid
       item
       container
       direction="column"
-      xs={6}
+      lg={checkout ? 12 : 6}
+      xs={12}
       alignItems="center"
       justifyContent="center"
       classes={{ root: classes.detailsContainer }}
@@ -116,7 +163,14 @@ export default function Details({
           container
           key={i}
           justifyContent="center"
-          classes={{ root: classes.fieldContainer }}
+          alignItems={matchesXS || checkout ? "center" : undefined}
+          classes={{
+            root: clsx({
+              [classes.fieldContainerCart]: checkout,
+              [classes.fieldContainer]: !checkout,
+            }),
+          }}
+          direction={matchesXS || checkout ? "column" : "row"}
         >
           <Fields
             fields={pair}
@@ -125,12 +179,18 @@ export default function Details({
             errors={errors}
             setErrors={setErrors}
             isWhite
-            disabled={!edit}
+            disabled={checkout ? false : !edit}
+            settings={!checkout}
           />
         </Grid>
       ))}
       <Grid item container classes={{ root: classes.slotContainer }}>
         <Slots slot={slot} setSlot={setSlot} />
+        {checkout && (
+          <Grid item>
+            <FormControlLabel control={<Switch />}></FormControlLabel>
+          </Grid>
+        )}
       </Grid>
     </Grid>
   )

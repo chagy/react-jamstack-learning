@@ -21,6 +21,9 @@ import zipAdornment from "../../images/zip-adornment.svg"
 const useStyles = makeStyles(theme => ({
   icon: {
     marginBottom: "3rem",
+    [theme.breakpoints.down("xs")]: {
+      marginBottom: "1rem",
+    },
   },
   chipWrapper: {
     marginTop: "2rem",
@@ -37,6 +40,10 @@ const useStyles = makeStyles(theme => ({
   },
   locationContainer: {
     position: "relative",
+    [theme.breakpoints.down("md")]: {
+      borderBottom: "4px solid #fff",
+      height: "30rem",
+    },
   },
 }))
 
@@ -115,7 +122,8 @@ export default function Location({
       item
       container
       direction="column"
-      xs={6}
+      lg={6}
+      xs={12}
       alignItems="center"
       justifyContent="center"
       classes={{ root: classes.locationContainer }}

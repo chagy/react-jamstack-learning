@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useContext } from "react"
 import AppBar from "@material-ui/core/AppBar"
 import Toolbar from "@material-ui/core/Toolbar"
 import Typography from "@material-ui/core/Typography"
@@ -13,12 +13,15 @@ import {
   List,
   ListItem,
   ListItemText,
+  Badge,
 } from "@material-ui/core"
 import { makeStyles } from "@material-ui/core"
 import { Link, navigate } from "gatsby"
 
+import { CartContext } from "../../contexts"
+
 import search from "../../images/search.svg"
-import cart from "../../images/cart.svg"
+import cartIcon from "../../images/cart.svg"
 import account from "../../images/account-header.svg"
 import menu from "../../images/menu.svg"
 
@@ -61,11 +64,23 @@ const useStyles = makeStyles(theme => ({
   listItemText: {
     color: "#FFF",
   },
+  badge: {
+    fontSize: "1rem",
+    color: "#fff",
+    backgroundColor: theme.palette.secondary.main,
+    [theme.breakpoints.down("xs")]: {
+      fontSize: "0.75rem",
+      height: "1.1rem",
+      width: "1.1rem",
+      minWidth: 0,
+    },
+  },
 }))
 
 export default function Header({ categories }) {
   const classes = useStyles()
   const matchesMD = useMediaQuery(theme => theme.breakpoints.down("md"))
+  const { cart } = useContext(CartContext)
 
   const [drawerOpen, setDrawerOpen] = useState(false)
 
@@ -139,7 +154,7 @@ export default function Header({ categories }) {
 
   const actions = [
     { icon: search, alt: "search", visible: true },
-    { icon: cart, alt: "cart", visible: true, link: "/cart" },
+    { icon: cartIcon, alt: "cart", visible: true, link: "/cart" },
     { icon: account, alt: "account", visible: !matchesMD, link: "/account" },
     {
       icon: menu,
@@ -163,6 +178,9 @@ export default function Header({ categories }) {
         </Button>
         {matchesMD ? drawer : tabs}
         {actions.map(action => {
+          const image = (
+            <img className={classes.icon} src={action.icon} alt={action.alt} />
+          )
           if (action.visible) {
             return (
               <IconButton
@@ -171,11 +189,17 @@ export default function Header({ categories }) {
                 to={action.onClick ? undefined : action.link}
                 key={action.alt}
               >
-                <img
-                  className={classes.icon}
-                  src={action.icon}
-                  alt={action.alt}
-                />
+                {action.alt === "cart" ? (
+                  <Badge
+                    overlap="circle"
+                    badgeContent={cart.length}
+                    classes={{ badge: classes.badge }}
+                  >
+                    {image}
+                  </Badge>
+                ) : (
+                  image
+                )}
               </IconButton>
             )
           }
