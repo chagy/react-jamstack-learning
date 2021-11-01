@@ -6,6 +6,8 @@ import {
   makeStyles,
   Chip,
   CircularProgress,
+  FormControlLabel,
+  Switch,
 } from "@material-ui/core"
 
 import Fields from "../auth/Fields"
@@ -20,7 +22,7 @@ import zipAdornment from "../../images/zip-adornment.svg"
 
 const useStyles = makeStyles(theme => ({
   icon: {
-    marginBottom: "3rem",
+    marginBottom: ({ checkout }) => (checkout ? "1rem" : "3rem"),
     [theme.breakpoints.down("xs")]: {
       marginBottom: "1rem",
     },
@@ -36,7 +38,7 @@ const useStyles = makeStyles(theme => ({
   },
   slotContainer: {
     position: "absolute",
-    bottom: 0,
+    bottom: ({ checkout }) => (checkout ? -8 : 0),
   },
   locationContainer: {
     position: "relative",
@@ -44,6 +46,13 @@ const useStyles = makeStyles(theme => ({
       borderBottom: "4px solid #fff",
       height: "30rem",
     },
+  },
+  switchWrapper: {
+    marginRight: 4,
+  },
+  switchLabel: {
+    color: "#fff",
+    fontWeight: 600,
   },
 }))
 
@@ -57,8 +66,12 @@ export default function Location({
   setSlot,
   errors,
   setErrors,
+  checkout,
+  billing,
+  setBilling,
+  noSlots,
 }) {
-  const classes = useStyles()
+  const classes = useStyles({ checkout })
   const [loading, setLoading] = useState(false)
   const { dispatchFeedback } = useContext(FeedbackContext)
 
@@ -86,14 +99,17 @@ export default function Location({
   }
 
   useEffect(() => {
+    if (noSlots) return
     setValues(user.locations[slot])
   }, [slot])
 
   useEffect(() => {
-    const changed = Object.keys(user.locations[slot]).some(
-      field => values[field] !== user.locations[slot][field]
-    )
-    setChangesMade(changed)
+    if (!checkout) {
+      const changed = Object.keys(user.locations[slot]).some(
+        field => values[field] !== user.locations[slot][field]
+      )
+      setChangesMade(changed)
+    }
 
     if (values.zip.length === 5) {
       if (values.city) return
@@ -122,7 +138,7 @@ export default function Location({
       item
       container
       direction="column"
-      lg={6}
+      lg={checkout ? 12 : 6}
       xs={12}
       alignItems="center"
       justifyContent="center"
@@ -149,7 +165,7 @@ export default function Location({
           errors={errors}
           setErrors={setErrors}
           isWhite
-          disabled={!edit}
+          disabled={checkout ? false : !edit}
         />
       </Grid>
       <Grid item classes={{ root: classes.chipWrapper }}>
@@ -163,9 +179,35 @@ export default function Location({
           />
         )}
       </Grid>
-      <Grid item container classes={{ root: classes.slotContainer }}>
-        <Slots slot={slot} setSlot={setSlot} />
-      </Grid>
+      {noSlots ? null : (
+        <Grid
+          item
+          container
+          justifyContent="space-between"
+          classes={{ root: classes.slotContainer }}
+        >
+          <Slots slot={slot} setSlot={setSlot} checkout={checkout} />
+          {checkout && (
+            <Grid item>
+              <FormControlLabel
+                classes={{
+                  root: classes.switchWrapper,
+                  label: classes.switchLabel,
+                }}
+                label="Billing"
+                labelPlacement="start"
+                control={
+                  <Switch
+                    checked={billing}
+                    onChange={() => setBilling(!billing)}
+                    color="secondary"
+                  />
+                }
+              ></FormControlLabel>
+            </Grid>
+          )}
+        </Grid>
+      )}
     </Grid>
   )
 }

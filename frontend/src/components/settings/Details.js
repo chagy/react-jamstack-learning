@@ -30,6 +30,7 @@ const useStyles = makeStyles(theme => ({
     marginBottom: 10,
   },
   icon: {
+    marginTop: ({ checkout }) => (checkout ? "-2rem" : undefined),
     marginBottom: ({ checkout }) => (checkout ? "1rem" : "3rem"),
     [theme.breakpoints.down("xs")]: {
       marginBottom: "1rem",
@@ -55,7 +56,7 @@ const useStyles = makeStyles(theme => ({
   },
   slotContainer: {
     position: "absolute",
-    bottom: 0,
+    bottom: ({ checkout }) => (checkout ? -8 : 0),
   },
   detailsContainer: {
     position: "relative",
@@ -63,6 +64,13 @@ const useStyles = makeStyles(theme => ({
       borderBottom: "4px solid #fff",
       height: "30rem",
     },
+  },
+  switchWrapper: {
+    marginRight: 4,
+  },
+  switchLabel: {
+    color: "#fff",
+    fontWeight: 600,
   },
   "@global": {
     ".MuiInput-underline:before, .MuiInput-underline:hover:not(.Mui-disabled):before":
@@ -88,12 +96,15 @@ export default function Details({
   checkout,
   billing,
   setBilling,
+  onSlots,
 }) {
-  const classes = useStyles()
+  const classes = useStyles({ checkout })
   const [visible, setVisible] = useState(false)
   const matchesXS = useMediaQuery(theme => theme.breakpoints.down("xs"))
 
   useEffect(() => {
+    if (onSlots) return
+
     if (checkout) {
       setValues(user.contactInfo[slot])
     } else {
@@ -184,14 +195,35 @@ export default function Details({
           />
         </Grid>
       ))}
-      <Grid item container classes={{ root: classes.slotContainer }}>
-        <Slots slot={slot} setSlot={setSlot} />
-        {checkout && (
-          <Grid item>
-            <FormControlLabel control={<Switch />}></FormControlLabel>
-          </Grid>
-        )}
-      </Grid>
+      {onSlots ? null : (
+        <Grid
+          item
+          container
+          justifyContent={checkout ? "space-between" : undefined}
+          classes={{ root: classes.slotContainer }}
+        >
+          <Slots slot={slot} setSlot={setSlot} checkout={checkout} />
+          {checkout && (
+            <Grid item>
+              <FormControlLabel
+                classes={{
+                  root: classes.switchWrapper,
+                  label: classes.switchLabel,
+                }}
+                label="Billing"
+                labelPlacement="start"
+                control={
+                  <Switch
+                    checked={billing}
+                    onChange={() => setBilling(!billing)}
+                    color="secondary"
+                  />
+                }
+              ></FormControlLabel>
+            </Grid>
+          )}
+        </Grid>
+      )}
     </Grid>
   )
 }
