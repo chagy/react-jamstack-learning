@@ -26,7 +26,9 @@ export default function QuickView() {
         classes={{ root: classes.cartContainer }}
       >
         <Grid item>
-          <Typography variant="h1">{user.username}'s Cart</Typography>
+          <Typography variant="h1" align="center">
+            {user.username}'s Cart
+          </Typography>
         </Grid>
         <Grid item container>
           <CartItems />

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react"
-import { Grid, Typography, makeStyles } from "@material-ui/core"
+import { Grid, useMediaQuery, makeStyles } from "@material-ui/core"
 
 import CheckoutNavigation from "./CheckoutNavigation"
+import BillingConfirmation from "./BillingConfirmation"
 import Details from "../settings/Details"
 import Location from "../settings/Location"
 import Payment from "../settings/Payments"
 import Shipping from "./Shipping"
 import Confirmation from "./Confirmation"
+import ThankYou from "./ThankYou"
 import validate from "../ui/validate"
 
 const useStyles = makeStyles(theme => ({
@@ -14,6 +16,14 @@ const useStyles = makeStyles(theme => ({
     width: "40rem",
     height: "25rem",
     backgroundColor: theme.palette.primary.main,
+    [theme.breakpoints.down("sm")]: {
+      width: "100%",
+    },
+  },
+  container: {
+    [theme.breakpoints.down("md")]: {
+      marginBottom: "5rem",
+    },
   },
   "@global": {
     ".MuiInput-underline:before, .MuiInput-underline:hover:not(.Mui-disabled):before":
@@ -28,6 +38,8 @@ const useStyles = makeStyles(theme => ({
 
 export default function CheckoutPortal({ user }) {
   const classes = useStyles()
+  const matchesMD = useMediaQuery(theme => theme.breakpoints.down("md"))
+
   const [selectedStep, setSelectedStep] = useState(0)
   const [detailValues, setDetailValues] = useState({
     name: "",
@@ -62,6 +74,8 @@ export default function CheckoutPortal({ user }) {
 
   const [errors, setErrors] = useState({})
 
+  const [order, setOrder] = useState(null)
+
   const [selectedShipping, setSelectedShipping] = useState(null)
   const shippingOptions = [
     { label: "FREE SHIPPING", price: 0 },
@@ -69,10 +83,23 @@ export default function CheckoutPortal({ user }) {
     { label: "OVERNIGHT SHIPPING", price: 29.99 },
   ]
 
-  const errorHelper = values => {
+  const errorHelper = (values, forBilling, billingValues, slot) => {
     const valid = validate(values)
 
-    return Object.keys(valid).some(value => !valid[value])
+    if (forBilling !== false && forBilling !== undefined) {
+      const billingValid = validate(billingValues)
+
+      if (forBilling === slot) {
+        return Object.keys(billingValid).some(value => !billingValid[value])
+      } else {
+        return (
+          Object.keys(billingValid).some(value => !billingValid[value]) ||
+          Object.keys(valid).some(value => !valid[value])
+        )
+      }
+    } else {
+      return Object.keys(valid).some(value => !valid[value])
+    }
   }
 
   let steps = [
@@ -89,10 +116,18 @@ export default function CheckoutPortal({ user }) {
           setErrors={setErrors}
           billing={detailForBilling}
           setBilling={setDetailForBilling}
+          billingValues={billingDetails}
+          setBillingValues={setBillingDetails}
           checkout
         />
       ),
-      error: errorHelper(detailValues),
+      hasActions: true,
+      error: errorHelper(
+        detailValues,
+        detailForBilling,
+        billingDetails,
+        detailSlot
+      ),
     },
     {
       title: "Billing Info",
@@ -121,10 +156,18 @@ export default function CheckoutPortal({ user }) {
           setBilling={setLocationForBilling}
           errors={errors}
           setErrors={setErrors}
+          billingValues={billingLocation}
+          setBillingValues={setBillingLocation}
           checkout
         />
       ),
-      error: errorHelper(locationValues),
+      hasActions: true,
+      error: errorHelper(
+        locationValues,
+        locationForBilling,
+        billingLocation,
+        locationSlot
+      ),
     },
     {
       title: "Billing Address",
@@ -169,6 +212,8 @@ export default function CheckoutPortal({ user }) {
       title: "Confirmation",
       component: (
         <Confirmation
+          user={user}
+          setOrder={setOrder}
           detailValues={detailValues}
           billingDetails={billingDetails}
           detailForBilling={detailForBilling}
@@ -177,17 +222,22 @@ export default function CheckoutPortal({ user }) {
           locationForBilling={locationForBilling}
           shippingOptions={shippingOptions}
           selectedShipping={selectedShipping}
+          selectedStep={selectedStep}
+          setSelectedStep={setSelectedStep}
         />
       ),
     },
-    { title: `Thanks, ${user.username}!` },
+    {
+      title: `Thanks, ${user.username.split(" ")[0]}!`,
+      component: <ThankYou order={order} selectedShipping={selectedShipping} />,
+    },
   ]
 
-  if (detailForBilling) {
+  if (detailForBilling !== false) {
     steps = steps.filter(step => step.title !== "Billing Info")
   }
 
-  if (locationForBilling) {
+  if (locationForBilling !== false) {
     steps = steps.filter(step => step.title !== "Billing Address")
   }
 
@@ -196,11 +246,25 @@ export default function CheckoutPortal({ user }) {
   }, [detailSlot, locationSlot])
 
   return (
-    <Grid item container direction="column" alignItems="flex-end" xs={6}>
+    <Grid
+      classes={{ root: classes.container }}
+      item
+      container
+      direction="column"
+      alignItems={matchesMD ? "flex-start" : "flex-end"}
+      lg={6}
+    >
       <CheckoutNavigation
         steps={steps}
         selectedStep={selectedStep}
         setSelectedStep={setSelectedStep}
+        details={detailValues}
+        detailSlot={detailSlot}
+        setDetail={setDetailValues}
+        location={locationValues}
+        locationSlot={locationSlot}
+        setLocation={setLocationValues}
+        setErrors={setErrors}
       />
       <Grid
         item
@@ -211,6 +275,16 @@ export default function CheckoutPortal({ user }) {
       >
         {steps[selectedStep].component}
       </Grid>
+      {steps[selectedStep].title === "Confirmation" && (
+        <BillingConfirmation
+          detailForBilling={detailForBilling}
+          billingDetails={billingDetails}
+          detailSlot={detailSlot}
+          locationForBilling={locationForBilling}
+          billingLocation={billingLocation}
+          locationSlot={locationSlot}
+        />
+      )}
     </Grid>
   )
 }
