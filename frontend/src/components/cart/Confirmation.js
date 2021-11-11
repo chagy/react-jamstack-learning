@@ -1,21 +1,20 @@
-import React, { useState, useContext } from "react"
+import React, { useState, useContext, useEffect } from "react"
 import axios from "axios"
 import clsx from "clsx"
-import {
-  Grid,
-  Typography,
-  makeStyles,
-  Button,
-  Chip,
-  CircularProgress,
-  useMediaQuery,
-} from "@material-ui/core"
+import Grid from "@material-ui/core/Grid"
+import Typography from "@material-ui/core/Typography"
+import CircularProgress from "@material-ui/core/CircularProgress"
+import Button from "@material-ui/core/Button"
+import Chip from "@material-ui/core/Chip"
+import useMediaQuery from "@material-ui/core/useMediaQuery"
+import { makeStyles } from "@material-ui/core/styles"
+import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js"
+import { v4 as uuidv4 } from "uuid"
 
 import Fields from "../auth/Fields"
-import { CartContext } from "../../contexts"
 
-import { dispatchFeedback } from "../../contexts"
-import { setSnackbar, clearCart } from "../../contexts/actions"
+import { CartContext, FeedbackContext, UserContext } from "../../contexts"
+import { setSnackbar, clearCart, setUser } from "../../contexts/actions"
 
 import confirmationIcon from "../../images/tag.svg"
 import NameAdornment from "../../images/NameAdronment"
@@ -41,7 +40,7 @@ const useStyles = makeStyles(theme => ({
   },
   text: {
     fontSize: "1rem",
-    color: "1rem",
+    color: "#fff",
     [theme.breakpoints.down("xs")]: {
       fontSize: "0.85rem",
     },
@@ -102,6 +101,8 @@ const useStyles = makeStyles(theme => ({
   },
   mainContainer: {
     height: "100%",
+    display: ({ selectedStep, stepNumber }) =>
+      selectedStep !== stepNumber ? "none" : "flex",
   },
   chipRoot: {
     backgroundColor: "#fff",
@@ -121,6 +122,8 @@ const useStyles = makeStyles(theme => ({
 
 export default function Confirmation({
   user,
+  order,
+  saveCard,
   detailValues,
   billingDetails,
   detailsForBilling,
@@ -131,22 +134,34 @@ export default function Confirmation({
   selectedShipping,
   selectedStep,
   setSelectedStep,
+  stepNumber,
   setOrder,
+  card,
+  cardSlot,
 }) {
-  const classes = useStyles()
+  const classes = useStyles({ stepNumber, selectedStep })
+  const stripe = useStripe()
+  const elements = useElements()
   const matchesXS = useMediaQuery(theme => theme.breakpoints.down("xs"))
+
   const [loading, setLoading] = useState(false)
+  const [clientSecret, setClientSecret] = useState(null)
   const { cart, dispatchCart } = useContext(CartContext)
+  const { dispatchFeedback } = useContext(FeedbackContext)
+  const { dispatchUser } = useContext(UserContext)
+
   const [promo, setPromo] = useState({ promo: "" })
   const [promoError, setPromoError] = useState({})
 
   const shipping = shippingOptions.find(
     option => option.label === selectedShipping
   )
+
   const subtotal = cart.reduce(
     (total, item) => total + item.variant.price * item.qty,
     0
   )
+
   const tax = subtotal * 0.075
 
   const firstFields = [
@@ -170,7 +185,7 @@ export default function Confirmation({
       value: detailValues.phone,
       adornment: (
         <div className={classes.phoneWrapper}>
-          <PhoneAdornment color="#fff" />
+          <PhoneAdornment />
         </div>
       ),
     },
@@ -186,7 +201,7 @@ export default function Confirmation({
       adornment: <img src={zipAdornment} alt="city, state, zip code" />,
     },
     {
-      value: "**** **** **** 1234",
+      value: `${card.brand.toUpperCase()} ${card.last4}`,
       adornment: (
         <img src={cardAdornment} alt="credit card" className={classes.card} />
       ),
@@ -201,9 +216,18 @@ export default function Confirmation({
   ]
 
   const prices = [
-    { label: "SUBTOTAL", value: subtotal.toFixed(2) },
-    { label: "SHIPPING", value: shipping.price.toFixed(2) },
-    { label: "TAX", value: tax.toFixed(2) },
+    {
+      label: "SUBTOTAL",
+      value: subtotal.toFixed(2),
+    },
+    {
+      label: "SHIPPING",
+      value: shipping?.price.toFixed(2),
+    },
+    {
+      label: "TAX",
+      value: tax.toFixed(2),
+    },
   ]
 
   const total = prices.reduce(
@@ -217,76 +241,178 @@ export default function Confirmation({
         {adornment}
       </Grid>
       <Grid item xs={10} classes={{ root: classes.centerText }} zeroMinWidth>
-        <Typography onWrap variant="body1" classes={{ root: classes.text }}>
+        <Typography noWrap variant="body1" classes={{ root: classes.text }}>
           {value}
         </Typography>
       </Grid>
     </>
   )
 
-  const handleOrder = () => {
+  const handleOrder = async () => {
     setLoading(true)
 
-    axios
-      .post(
-        process.env.GATSBY_STRAPI_URL + "/orders/place",
-        {
-          shippingAddress: locationValues,
-          billingAddress: billingLocation,
-          shippingInfo: detailValues,
-          billingInfo: billingDetails,
-          shippingOption: shipping,
-          subtotal: subtotal.toFixed(2),
-          tax: tax.toFixed(2),
-          total: total.toFixed(2),
-          items: cart,
-        },
-        {
-          headers:
-            user.username === "Guest"
-              ? undefined
-              : { Authorization: `Bearer ${user.jwt}` },
-        }
-      )
-      .then(response => {
-        setLoading(false)
-        dispatchCart(clearCart())
-        setOrder(response.data.order)
-        setSelectedStep(selectedStep + 1)
-      })
-      .catch(error => {
-        setLoading(false)
-        console.error(error)
+    const savedCard = user.jwt && user.paymentMethods[cardSlot].last4 !== ""
 
-        switch (error.response.status) {
-          case 400:
-            dispatchFeedback(
-              setSnackbar({ status: "error", message: "Invalid Cart" })
-            )
-            break
-          case 409:
-            dispatchFeedback(
-              setSnackbar({
-                status: "error",
-                message:
-                  `The following items are not available at the requested quantity. Please update your cart and try again.\n ` +
-                  `${error.response.data.unavailable.map(
-                    item => `\nItem: ${item.id} Available: ${item.qty}`
-                  )}`,
-              })
-            )
-            break
-          default:
-            dispatchFeedback(
-              setSnackbar({
-                status: "error",
-                message:
-                  "Something went wrong, please refresh the page and try again. You have NOT been charged.",
-              })
-            )
-        }
-      })
+    const idempotencyKey = uuidv4()
+
+    const cardElement = elements.getElement(CardElement)
+
+    const result = await stripe.confirmCardPayment(
+      clientSecret,
+      {
+        payment_method: savedCard
+          ? undefined
+          : {
+              card: cardElement,
+              billing_details: {
+                address: {
+                  city: billingLocation.city,
+                  state: billingLocation.state,
+                  line1: billingLocation.street,
+                },
+                email: billingDetails.email,
+                name: billingDetails.name,
+                phone: billingDetails.phone,
+              },
+            },
+        setup_future_usage: saveCard ? "off_session" : undefined,
+      },
+      { idempotencyKey }
+    )
+
+    if (result.error) {
+      console.error(result.error.message)
+      dispatchFeedback(
+        setSnackbar({ status: "error", message: result.error.message })
+      )
+      setLoading(false)
+    } else if (result.paymentIntent.status === "succeeded") {
+      axios
+        .post(
+          process.env.GATSBY_STRAPI_URL + "/orders/finalize",
+          {
+            shippingAddress: locationValues,
+            billingAddress: billingLocation,
+            shippingInfo: detailValues,
+            billingInfo: billingDetails,
+            shippingOption: shipping,
+            subtotal: subtotal.toFixed(2),
+            tax: tax.toFixed(2),
+            total: total.toFixed(2),
+            items: cart,
+            transaction: result.paymentIntent.id,
+            paymentMethod: card,
+            saveCard,
+            cardSlot,
+          },
+          {
+            headers:
+              user.username === "Guest"
+                ? undefined
+                : { Authorization: `Bearer ${user.jwt}` },
+          }
+        )
+        .then(response => {
+          if (saveCard) {
+            let newUser = { ...user }
+            newUser.paymentMethods[cardSlot] = card
+            dispatchUser(setUser(newUser))
+          }
+
+          setLoading(false)
+          dispatchCart(clearCart())
+
+          localStorage.removeItem("intentID")
+          setClientSecret(null)
+
+          setOrder(response.data.order)
+          setSelectedStep(selectedStep + 1)
+        })
+        .catch(error => {
+          setLoading(false)
+          console.error(error)
+          console.log("FAILED PAYMENT INTENT", result.paymentIntent.id)
+          console.log("FAILED CART", cart)
+
+          localStorage.removeItem("intentID")
+          setClientSecret(null)
+
+          dispatchFeedback(
+            setSnackbar({
+              status: "error",
+              message:
+                "There was a problem saving your order. Please keep this screen open and contact support.",
+            })
+          )
+        })
+    }
   }
+
+  useEffect(() => {
+    if (!order && cart.length !== 0 && selectedStep === stepNumber) {
+      const storedIntent = localStorage.getItem("intentID")
+      const idempotencyKey = uuidv4()
+
+      setClientSecret(null)
+
+      axios
+        .post(
+          process.env.GATSBY_STRAPI_URL + "/orders/process",
+          {
+            items: cart,
+            total: total.toFixed(2),
+            shippingOption: shipping,
+            idempotencyKey,
+            storedIntent,
+            email: detailValues.email,
+            savedCard:
+              user.jwt && user.paymentMethods[cardSlot].last4 !== ""
+                ? card.last4
+                : undefined,
+          },
+          {
+            headers: user.jwt
+              ? { Authorization: `Bearer ${user.jwt}` }
+              : undefined,
+          }
+        )
+        .then(response => {
+          setClientSecret(response.data.client_secret)
+          localStorage.setItem("intentID", response.data.intentID)
+        })
+        .catch(error => {
+          console.error(error)
+
+          switch (error.response.status) {
+            case 400:
+              dispatchFeedback(
+                setSnackbar({ status: "error", message: "Invalid Cart" })
+              )
+              break
+            case 409:
+              dispatchFeedback(
+                setSnackbar({
+                  status: "error",
+                  message:
+                    `The following items are not available at the requested quantity. Please update your cart and try again.\n` +
+                    `${error.response.data.unavailable.map(
+                      item => `\nItem: ${item.id}, Available: ${item.qty}`
+                    )}`,
+                })
+              )
+              break
+            default:
+              dispatchFeedback(
+                setSnackbar({
+                  status: "error",
+                  message:
+                    "Something went wrong, please refresh the page and try again. You have NOT been charged.",
+                })
+              )
+          }
+        })
+    }
+  }, [cart, selectedStep, stepNumber])
 
   return (
     <Grid
@@ -302,7 +428,7 @@ export default function Confirmation({
               item
               container
               alignItems="center"
-              key={field.value}
+              key={i}
               classes={{
                 root: clsx(classes.fieldRow, {
                   [classes.darkBackground]: i % 2 !== 0,
@@ -329,7 +455,7 @@ export default function Confirmation({
             }),
           }}
         >
-          <Grid item xs={7} container>
+          <Grid item container xs={7}>
             {field.promo ? (
               <span className={classes.fieldWrapper}>
                 <Fields
@@ -357,9 +483,7 @@ export default function Confirmation({
                 align="right"
                 variant="body2"
                 classes={{ root: classes.priceValue }}
-              >
-                {`$${prices[i].value}`}
-              </Typography>
+              >{`$${prices[i].value}`}</Typography>
             </Grid>
           </Grid>
         </Grid>
@@ -368,9 +492,9 @@ export default function Confirmation({
         <Button
           classes={{ root: classes.button, disabled: classes.disabled }}
           onClick={handleOrder}
-          disabled={cart.length === 0}
+          disabled={cart.length === 0 || loading || !clientSecret}
         >
-          <Grid container justifyContent="space-around" alignItems="center">
+          <Grid container justify="space-around" alignItems="center">
             <Grid item>
               <Typography variant="h5">PLACE ORDER</Typography>
             </Grid>

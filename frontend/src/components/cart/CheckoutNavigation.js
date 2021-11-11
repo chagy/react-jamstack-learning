@@ -55,7 +55,9 @@ const useStyles = makeStyles(theme => ({
     },
   },
   iconButton: {
-    padding: 6,
+    [theme.breakpoints.down("xs")]: {
+      padding: 6,
+    },
   },
   actions: {
     position: "absolute",
@@ -67,9 +69,11 @@ const useStyles = makeStyles(theme => ({
     },
   },
   navButtons: {
-    width: "1.5rem",
-    height: "1.5rem",
-    minWidth: 0,
+    [theme.breakpoints.down("xs")]: {
+      width: "1.5rem",
+      height: "1.5rem",
+      minWidth: 0,
+    },
   },
 }))
 

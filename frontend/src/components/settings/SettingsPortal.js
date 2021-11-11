@@ -14,6 +14,8 @@ import Settings from "./Settings"
 import { UserContext } from "../../contexts/wrappers/UserWrapper"
 import { setUser } from "../../contexts/actions"
 
+import OrderHistory from "./OrderHistory"
+
 import accountIcon from "../../images/account.svg"
 import settingsIcon from "../../images/settings.svg"
 import orderHistoryIcon from "../../images/order-history.svg"
@@ -98,7 +100,7 @@ export default function SettingsPortal() {
 
   const buttons = [
     { label: "Settings", icon: settingsIcon, component: Settings },
-    { label: "Order History", icon: orderHistoryIcon },
+    { label: "Order History", icon: orderHistoryIcon, component: OrderHistory },
     { label: "Favorites", icon: favoritesIcon },
     { label: "Subscriptions", icon: subscriptionIcon },
   ]

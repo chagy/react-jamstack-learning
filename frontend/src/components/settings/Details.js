@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from "react"
 import clsx from "clsx"
-import {
-  Grid,
-  makeStyles,
-  useMediaQuery,
-  FormControlLabel,
-  Switch,
-} from "@material-ui/core"
+import Grid from "@material-ui/core/Grid"
+import Typography from "@material-ui/core/Typography"
+import Button from "@material-ui/core/Button"
+import FormControlLabel from "@material-ui/core/FormControlLabel"
+import Switch from "@material-ui/core/Switch"
+import useMediaQuery from "@material-ui/core/useMediaQuery"
+import { makeStyles } from "@material-ui/core/styles"
 
 import Fields from "../auth/Fields"
 import Slots from "./Slots"
@@ -37,7 +37,7 @@ const useStyles = makeStyles(theme => ({
     },
   },
   fieldContainer: {
-    marginBottom: "3rem",
+    marginBottom: "2rem",
     "& > :not(:first-child)": {
       marginLeft: "5rem",
     },
@@ -59,10 +59,13 @@ const useStyles = makeStyles(theme => ({
     bottom: ({ checkout }) => (checkout ? -8 : 0),
   },
   detailsContainer: {
+    height: "100%",
+    display: ({ checkout, selectedStep, stepNumber }) =>
+      checkout && selectedStep !== stepNumber ? "none" : "flex",
     position: "relative",
     [theme.breakpoints.down("md")]: {
       borderBottom: "4px solid #fff",
-      height: "30rem",
+      height: ({ checkout }) => (!checkout ? "30rem" : "100%"),
     },
   },
   switchWrapper: {
@@ -101,16 +104,18 @@ export default function Details({
   setBilling,
   billingValues,
   setBillingValues,
-  onSlots,
+  noSlots,
+  selectedStep,
+  stepNumber,
 }) {
-  const classes = useStyles({ checkout })
+  const classes = useStyles({ checkout, selectedStep, stepNumber })
   const isMounted = useRef(false)
 
   const [visible, setVisible] = useState(false)
   const matchesXS = useMediaQuery(theme => theme.breakpoints.down("xs"))
 
   useEffect(() => {
-    if (onSlots || user.username === "Guest") return
+    if (noSlots || user.username === "Guest") return
 
     if (checkout) {
       setValues(user.contactInfo[slot])
@@ -125,18 +130,21 @@ export default function Details({
     const changed = Object.keys(user.contactInfo[slot]).some(
       field => values[field] !== user.contactInfo[slot][field]
     )
+
     setChangesMade(changed)
   }, [values])
 
   useEffect(() => {
-    if (onSlots) {
+    if (noSlots) {
       isMounted.current = false
       return
     }
+
     if (isMounted.current === false) {
       isMounted.current = true
       return
     }
+
     if (billing === false && isMounted.current) {
       setValues(billingValues)
     } else {
@@ -182,7 +190,7 @@ export default function Details({
       lg={checkout ? 12 : 6}
       xs={12}
       alignItems="center"
-      justifyContent="center"
+      justify="center"
       classes={{ root: classes.detailsContainer }}
     >
       <Grid item>
@@ -195,9 +203,9 @@ export default function Details({
       {fields.map((pair, i) => (
         <Grid
           container
-          key={i}
-          justifyContent="center"
+          justify="center"
           alignItems={matchesXS || checkout ? "center" : undefined}
+          key={i}
           classes={{
             root: clsx({
               [classes.fieldContainerCart]: checkout,
@@ -208,9 +216,9 @@ export default function Details({
         >
           <Fields
             fields={pair}
-            values={billing === slot && !onSlots ? billingValues : values}
+            values={billing === slot && !noSlots ? billingValues : values}
             setValues={
-              billing === slot && !onSlots ? setBillingValues : setValues
+              billing === slot && !noSlots ? setBillingValues : setValues
             }
             errors={errors}
             setErrors={setErrors}
@@ -220,11 +228,11 @@ export default function Details({
           />
         </Grid>
       ))}
-      {onSlots ? null : (
+      {noSlots ? null : (
         <Grid
           item
           container
-          justifyContent={checkout ? "space-between" : undefined}
+          justify={checkout ? "space-between" : undefined}
           classes={{ root: classes.slotContainer }}
         >
           <Slots slot={slot} setSlot={setSlot} checkout={checkout} />
@@ -244,7 +252,7 @@ export default function Details({
                     color="secondary"
                   />
                 }
-              ></FormControlLabel>
+              />
             </Grid>
           )}
         </Grid>

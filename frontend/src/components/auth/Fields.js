@@ -1,5 +1,9 @@
 import React from "react"
-import { Grid, TextField, InputAdornment, makeStyles } from "@material-ui/core"
+import Grid from "@material-ui/core/Grid"
+import Typography from "@material-ui/core/Typography"
+import TextField from "@material-ui/core/TextField"
+import InputAdornment from "@material-ui/core/InputAdornment"
+import { makeStyles } from "@material-ui/core/styles"
 
 import validate from "../ui/validate"
 
@@ -15,7 +19,7 @@ const useStyles = makeStyles(theme => ({
     },
   },
   input: {
-    color: ({ isWhite }) => (isWhite ? "#FFF" : theme.palette.secondary.main),
+    color: ({ isWhite }) => (isWhite ? "#fff" : theme.palette.secondary.main),
     fontSize: ({ xs }) => (xs ? "1.25rem" : undefined),
   },
 }))
@@ -30,14 +34,10 @@ export default function Fields({
   disabled,
   fullWidth,
   settings,
+  noError,
   xs,
 }) {
-  const classes = useStyles({
-    isWhite,
-    fullWidth,
-    settings,
-    xs,
-  })
+  const classes = useStyles({ isWhite, fullWidth, settings, xs })
 
   return Object.keys(fields).map(field => {
     const validateHelper = event => {
@@ -50,28 +50,32 @@ export default function Fields({
           value={values[field]}
           onChange={e => {
             const valid = validateHelper(e)
-            if (errors[field] || valid[field] === true) {
+
+            if (!noError && (errors[field] || valid[field] === true)) {
               setErrors({ ...errors, [field]: !valid[field] })
             }
+
             setValues({ ...values, [field]: e.target.value })
           }}
+          classes={{ root: classes.textField }}
           onBlur={e => {
+            if (noError) return
+
             const valid = validateHelper(e)
             setErrors({ ...errors, [field]: !valid[field] })
           }}
-          error={errors[field]}
-          helperText={errors[field] && fields[field].helperText}
-          classes={{ root: classes.textField }}
+          error={noError ? false : errors[field]}
+          helperText={noError ? "" : errors[field] && fields[field].helperText}
           placeholder={fields[field].placeholder}
           type={fields[field].type}
           disabled={disabled}
           fullWidth={fullWidth}
           InputProps={{
-            startAdornment: (
+            startAdornment: fields[field].startAdornment ? (
               <InputAdornment position="start">
                 {fields[field].startAdornment}
               </InputAdornment>
-            ),
+            ) : undefined,
             endAdornment: fields[field].endAdornment ? (
               <InputAdornment position="end">
                 {fields[field].endAdornment}

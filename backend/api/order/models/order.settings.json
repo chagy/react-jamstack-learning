@@ -2,7 +2,8 @@
   "kind": "collectionType",
   "collectionName": "orders",
   "info": {
-    "name": "Order"
+    "name": "Order",
+    "description": ""
   },
   "options": {
     "increments": true,
@@ -52,9 +53,18 @@
       "required": true
     },
     "user": {
+      "via": "orders",
       "plugin": "users-permissions",
-      "model": "user",
-      "via": "orders"
+      "model": "user"
+    },
+    "transaction": {
+      "type": "string",
+      "required": true
+    },
+    "paymentMethod": {
+      "type": "json",
+      "unique": false,
+      "required": true
     }
   }
 }
